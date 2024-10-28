@@ -6,30 +6,18 @@ import shutil
 from sklearn.model_selection import train_test_split
 from pcntoolkit.normative import estimate, evaluate
 from plot_num_subjs import plot_num_subjs
-from Utility_Functions import create_design_matrix_one_gender, plot_data_with_spline_one_gender
-from Utility_Functions import create_dummy_design_matrix_one_gender
+from Utility_Functions import create_design_matrix, plot_data_with_spline
+from Utility_Functions import create_dummy_design_matrix
 from Utility_Functions import barplot_performance_values, plot_y_v_yhat, makenewdir, movefiles
 from Utility_Functions import write_ages_to_file
-from Load_Genz_Data import load_genz_data
+from Load_Genz_Data_WWM_MPF import load_genz_data_wm_mpf
 
-def make_time1_normative_model(gender, orig_struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
-                               orig_data_dir, working_dir):
+def make_time1_normative_model(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
+                              data_dir, working_dir, datafilename, subjects_to_exclude, demographics_filename):
 
     # load visit 1 (pre-COVID) data
     visit = 1
-    brain_good, all_data, roi_ids = load_genz_data(orig_struct_var, visit, orig_data_dir)
-
-    if gender == 'male':
-        # keep only data for males
-        all_data = all_data.loc[all_data['sex'] == 1]
-        struct_var = 'cortthick_male'
-    else:
-        # keep only data for females
-        all_data = all_data.loc[all_data['sex'] == 2]
-        struct_var = 'cortthick_female'
-
-    #remove sex column
-    all_data = all_data.drop(columns=['sex'])
+    all_data, roi_ids = load_genz_data_wm_mpf(struct_var, visit, data_dir, datafilename, demographics_filename)
 
     # make directories to store files
     makenewdir('{}/data/'.format(working_dir))
@@ -39,50 +27,49 @@ def make_time1_normative_model(gender, orig_struct_var, show_plots, show_nsubjec
     makenewdir('{}/data/{}/covariate_files'.format(working_dir, struct_var))
     makenewdir('{}/data/{}/response_files'.format(working_dir, struct_var))
 
-    if gender == 'male':
-        # remove subject 525 who has an incidental finding
-        brain_good = brain_good[~brain_good['participant_id'].isin([525])]
-        all_data = all_data[~all_data['participant_id'].isin([525])]
+    # Remove subjects to exclude
+    all_data = all_data[~all_data['participant_id'].isin(subjects_to_exclude)]
+
+    # Replace gender codes 1=male 2=female with binary values (make male=1 and female=0)
+    all_data.loc[all_data['sex'] == 2, 'sex'] = 0
 
     # show bar plots with number of subjects per age group in pre-COVID data
-    if gender == "female":
-        genstring = 'Female'
-    elif gender == "male":
-        genstring = 'Male'
     if show_nsubject_plots:
-        plot_num_subjs(all_data, gender, f'{genstring} Subjects by Age with Pre-COVID Data\n'
+        plot_num_subjs(all_data, 'Subjects by Age with Pre-COVID Data\n'
                                  '(Total N=' + str(all_data.shape[0]) + ')', struct_var, 'pre-covid_allsubj',
                                   working_dir)
 
-    # read in file of subjects in training set excluding validation set
-    fname = '{}/train_subjects_excludes_validation.csv'.format(orig_data_dir)
-    subjects_train = pd.read_csv(fname, header=None)
+    Xsubjects_train, Xsubjects_test = train_test_split(all_data['participant_id'],
+                                                    test_size=0.5, random_state=42, stratify=all_data[['sex', 'age']])
 
-    # keep only subjects in training set who are not in validation set
-  #  brain_good = brain_good[brain_good['participant_id'].isin(subjects_test[0])]
-    all_data = all_data[all_data['participant_id'].isin(subjects_train[0])]
 
-    # write subject numbers for training set to file
-    subjects_training = all_data['participant_id'].tolist()
+    # write subject numbers for training set and test set to file
+    subjects_train = Xsubjects_train.tolist()
+    subjects_test  = Xsubjects_test.tolist()
+
     fname = '{}/visit1_subjects_used_to_create_normative_model_train_set_{}.txt'.format(working_dir, struct_var)
     file1 = open(fname, "w")
-    for subj in subjects_training:
+    for subj in subjects_train:
         file1.write(str(subj) + "\n")
     file1.close()
 
+    fname = '{}/visit1_subjects_used_to_create_normative_model_test_set_{}.txt'.format(working_dir, struct_var)
+    file1 = open(fname, "w")
+    for subj in subjects_test:
+        file1.write(str(subj) + "\n")
+    file1.close()
+
+    all_data = all_data[all_data['participant_id'].isin(subjects_train)]
+
     # plot number of subjects of each gender by age who are included in training data set
     if show_nsubject_plots:
-        plot_num_subjs(all_data, gender, f'{genstring} Subjects by Age with Pre-COVID Data\nUsed to Create Model\n'
-                                 '(Total N=' + str(all_data.shape[0]) + ')', struct_var, 'pre-covid_norm_model',
+        plot_num_subjs(all_data, 'Subjects by Age with Pre-COVID Data\n'
+                                 '(Total N=' + str(all_data.shape[0]) + ')', struct_var, 'pre-covid_allsubj',
                                   working_dir)
-
-    # drop rows with any missing values
-    all_data = all_data.dropna()
-    all_data.reset_index(inplace=True, drop=True)
 
     # separate the brain features (response variables) and predictors (age) in to separate dataframes
     all_data_features = all_data.loc[:, roi_ids]
-    all_data_covariates = all_data[['age', 'agedays']]
+    all_data_covariates = all_data[['age', 'agedays', 'sex']]
 
     # use entire training set to create models
     X_train = all_data_covariates.copy()
@@ -94,7 +81,7 @@ def make_time1_normative_model(gender, orig_struct_var, show_plots, show_nsubjec
     agemin = X_train['agedays'].min()
     agemax = X_train['agedays'].max()
 
-    write_ages_to_file(working_dir, agemin, agemax, struct_var, gender)
+    write_ages_to_file(working_dir, agemin, agemax, struct_var)
 
     # save the subject numbers for the training and validation sets to variables
     s_index_train = X_train.index.values
@@ -146,8 +133,8 @@ def make_time1_normative_model(gender, orig_struct_var, show_plots, show_nsubjec
     data_dir = '{}/data/{}/ROI_models/'.format(working_dir, struct_var)
 
     # Create Design Matrix and add in spline basis and intercept for validation and training data
-    create_design_matrix_one_gender('test', agemin, agemax, spline_order, spline_knots, roi_ids, data_dir)
-    create_design_matrix_one_gender('train', agemin, agemax, spline_order, spline_knots, roi_ids, data_dir)
+    create_design_matrix('train', agemin, agemax, spline_order, spline_knots, roi_ids, data_dir)
+    create_design_matrix('test', agemin, agemax, spline_order, spline_knots, roi_ids, data_dir)
 
     # Create pandas dataframes with header names to save evaluation metrics
     blr_metrics = pd.DataFrame(columns=['ROI', 'MSLL', 'EV', 'SMSE', 'RMSE', 'Rho'])
@@ -198,21 +185,17 @@ def make_time1_normative_model(gender, orig_struct_var, show_plots, show_nsubjec
 
         if show_plots:
             # plot y versus y hat for validation data
-            plot_y_v_yhat_one_gender(gender, cov_file_te, resp_file_te, yhat_te, 'Validation Data', struct_var, roi,
-                                                   Rho_te, EV_te)
+            plot_y_v_yhat(cov_file_te, resp_file_te, yhat_te, 'Validation Data', struct_var, roi, Rho_te, EV_te)
 
         # create dummy design matrices for visualizing model
-        dummy_cov_file_path = \
-            (create_dummy_design_matrix_one_gender(struct_var, agemin, agemax, cov_file_tr, spline_order, spline_knots,
-                                                   working_dir))
+        dummy_cov_file_path_female, dummy_cov_file_path_male = \
+            create_dummy_design_matrix(struct_var, agemin, agemax, cov_file_tr, spline_order, spline_knots, working_dir)
 
-        # compute splines and superimpose on data. Show on screen or save to file depending on show_plots value.
-        plot_data_with_spline_one_gender(gender, 'Training Data', struct_var, cov_file_tr, resp_file_tr, dummy_cov_file_path,
-                              model_dir, roi, show_plots, working_dir)
-
-        # compute splines and superimpose on data. Show on screen or save to file depending on show_plots value.
-        plot_data_with_spline_one_gender(gender, 'Validation Data', struct_var, cov_file_te, resp_file_te, dummy_cov_file_path,
-                              model_dir, roi, show_plots, working_dir)
+        # Compute splines and superimpose on data. Show on screen or save to file depending on show_plots value.
+        plot_data_with_spline('Training Data', struct_var, cov_file_tr, resp_file_tr, dummy_cov_file_path_female,
+                              dummy_cov_file_path_male, model_dir, roi, show_plots, working_dir)
+        plot_data_with_spline('Validation Data', struct_var, cov_file_te, resp_file_te, dummy_cov_file_path_female,
+                              dummy_cov_file_path_male, model_dir, roi, show_plots, working_dir)
 
         # add a row to the blr_metrics dataframe containing ROI, MSLL, EXPV, SMSE, RMSE, and Rho metrics
         blr_metrics.loc[len(blr_metrics)] = [roi, metrics_te['MSLL'][0],
@@ -243,19 +226,18 @@ def make_time1_normative_model(gender, orig_struct_var, show_plots, show_nsubjec
     blr_site_metrics.to_csv('{}/data/{}/blr_metrics_{}.txt'.format(working_dir, struct_var, struct_var), index=False)
 
     # save validation z scores to file
-    Z_score_test_matrix.to_csv('{}/data/{}/Z_scores_by_region_validation_set_{}.txt'.format(working_dir, struct_var,
-                                            gender), index=False)
+    Z_score_test_matrix.to_csv('{}/data/{}/Z_scores_by_region_validation_set.txt'.format(working_dir, struct_var),
+                               index=False)
 
     ##########
     # Display plots of Rho and EV for validation set
     ##########
-
+    # Display plots of Rho and EV for validation set
     blr_metrics.sort_values(by=['Rho'], inplace=True, ignore_index=True)
     barplot_performance_values(struct_var, 'Rho', blr_metrics, spline_order, spline_knots, 'Validation Set',
-                               working_dir, gender)
+                               working_dir)
     blr_metrics.sort_values(by=['EV'], inplace=True, ignore_index=True)
-    barplot_performance_values(struct_var, 'EV', blr_metrics, spline_order, spline_knots, 'Validation Set', working_dir,
-                               gender)
-    # plt.show()
+    barplot_performance_values(struct_var, 'EV', blr_metrics, spline_order, spline_knots, 'Validation Set', working_dir)
+    plt.show()
 
-    return Z_score_test_matrix
+    return Z_score_test_matrix, roi_ids

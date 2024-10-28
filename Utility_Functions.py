@@ -187,15 +187,15 @@ def barplot_performance_values(struct_var, metric, df, spline_order, spline_knot
         '{}/data/{}/plots/{}_{}_for_all_regions_splineorder{}, splineknots{}.png'
         .format(path, struct_var, datastr, metric, spline_order, spline_knots))
 
-def write_ages_to_file(agemin, agemax, struct_var):
-    with open("agemin_agemax_Xtrain_{}.txt".format(struct_var), "w") as file:
+def write_ages_to_file(workingdir, agemin, agemax, struct_var):
+    with open("{}/agemin_agemax_Xtrain_{}.txt".format(workingdir, struct_var), "w") as file:
         # Write the values to the file
         file.write(str(agemin) + "\n")
         file.write(str(agemax) + "\n")
 
-def read_ages_from_file(struct_var):
+def read_ages_from_file(workingdir, struct_var):
     # Open the file in read mode
-    with open("agemin_agemax_Xtrain_{}.txt".format(struct_var), "r") as file:
+    with open("{}/agemin_agemax_Xtrain_{}.txt".format(workingdir, struct_var), "r") as file:
         # Read all lines from the file
         lines = file.readlines()
     # Extract the values from the lines

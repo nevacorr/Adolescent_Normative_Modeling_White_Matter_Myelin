@@ -8,25 +8,26 @@
 import os
 import pandas as pd
 from matplotlib import pyplot as plt
-from Load_Genz_Data import load_genz_data
+from Load_Genz_Data_WWM_MPF import load_genz_data_wm_mpf
 from plot_num_subjs import plot_num_subjs
 from Utility_Functions import makenewdir, movefiles, create_dummy_design_matrix
 from Utility_Functions import plot_data_with_spline, create_design_matrix, read_ages_from_file
 import shutil
 from normative_edited import predict
 
-def apply_normative_model_time2(gender, orig_struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
-                                orig_data_dir, working_dir):
+def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
+                                data_dir, working_dir, visit1_datafile, visit2_datafile, subjects_to_exclude_time2,
+                                demographics_filename):
 
     ######################## Apply Normative Model to Post-Covid Data ############################
 
     # load all brain and behavior data for visit 2
     visit = 2
-    brain_good, all_data, roi_ids = load_genz_data(orig_struct_var, visit, orig_data_dir)
+    all_data, roi_ids = load_genz_data_wm_mpf(struct_var, visit, data_dir, visit2_datafile, demographics_filename)
 
     #load brain and behavior data for visit 1
     visit = 1
-    brain_v1, all_v1, roi_v1 = load_genz_data(orig_struct_var, visit, orig_data_dir)
+    all_v1, roi_v1 = load_genz_data_wm_mpf(struct_var, visit, data_dir, visit1_datafile, demographics_filename)
 
     #extract subject numbers from visit 1 and find subjects in visit 2 that aren't in visit 1
     subjects_visit1 = all_v1['participant_id']
@@ -36,32 +37,15 @@ def apply_normative_model_time2(gender, orig_struct_var, show_plots, show_nsubje
     #only keep subjects at 12, 14 and 16 years of age (subject numbers <400) because cannot model 18 and 20 year olds
     subjs_in_v2_not_v1 = subjs_in_v2_not_v1[subjs_in_v2_not_v1 < 400]
 
-    if gender == 'male':
-        # keep only data for males
-        all_data = all_data.loc[all_data['sex'] == 1]
-        struct_var = 'cortthick_male'
-    else:
-        # keep only data for females
-        all_data = all_data.loc[all_data['sex'] == 2]
-        struct_var = 'cortthick_female'
-
-    #remove sex column
-    all_data = all_data.drop(columns=['sex'])
-
     #only include subjects that were not in the training or validation set
-    fname='{}/visit1_subjects_excluded_from_normative_model_test_set_{}_9_11_13.txt'.format(orig_data_dir, orig_struct_var)
-    subjects_to_include = pd.read_csv(fname, header=None)
+    fname_test = '{}/visit1_subjects_used_to_create_normative_model_test_set_{}.txt'.format(working_dir, struct_var)
+    subjects_to_include = pd.read_csv(fname_test, header=None)
     subjects_to_include = pd.concat([subjects_to_include, subjs_in_v2_not_v1])
-    brain_good = brain_good[brain_good['participant_id'].isin(subjects_to_include[0])]
     all_data = all_data[all_data['participant_id'].isin(subjects_to_include[0])]
+    all_data = all_data[all_data['participant_id']<400]
 
-    #write subject numbers used in test set to file
-    subjects_test = all_data['participant_id'].tolist()
-    fname = '{}/visit2_all_subjects_used_in_test_set_{}_{}.txt'.format(working_dir, struct_var, gender)
-    file1 = open(fname, "w")
-    for subj in subjects_test:
-        file1.write(str(subj) + "\n")
-    file1.close()
+    # Replace gender codes 1=male 2=female with binary values (make male=1 and female=0)
+    all_data.loc[all_data['sex'] == 2, 'sex'] = 0
 
     #make file diretories for output
     makenewdir('{}/predict_files/'.format(working_dir))
@@ -72,22 +56,17 @@ def apply_normative_model_time2(gender, orig_struct_var, show_plots, show_nsubje
     makenewdir('{}/predict_files/{}/response_files'.format(working_dir, struct_var))
 
     # reset indices
-    brain_good.reset_index(inplace=True)
     all_data.reset_index(inplace=True, drop=True)
     #read agemin and agemax from file
     agemin, agemax = read_ages_from_file(working_dir, struct_var)
 
     #show number of subjects by gender and age
-    if gender == "female":
-        genstring = 'Female'
-    elif gender == "male":
-        genstring = 'Male'
     if show_nsubject_plots:
-        plot_num_subjs(all_data, gender, f'{genstring} Subjects with Post-COVID Data\nEvaluated by Model\n'
+        plot_num_subjs(all_data, 'Subjects with Post-COVID Data\nEvaluated by Model\n'
                        +' (Total N=' + str(all_data.shape[0]) + ')', struct_var, 'post-covid_allsubj', working_dir)
 
     #specify which columns of dataframe to use as covariates
-    X_test = all_data[['agedays']]
+    X_test = all_data[['agedays', 'sex']]
 
     #make a matrix of response variables, one for each brain region
     y_test = all_data.loc[:, roi_ids]
@@ -131,13 +110,13 @@ def apply_normative_model_time2(gender, orig_struct_var, show_plots, show_nsubje
     ####Make Predictions of Brain Structural Measures Post-Covid based on Pre-Covid Normative Model
 
     #create design matrices for all regions and save files in respective directories
-    create_design_matrix_one_gender('test', agemin, agemax, spline_order, spline_knots, roi_ids, predict_files_dir)
+    create_design_matrix('test', agemin, agemax, spline_order, spline_knots, roi_ids, predict_files_dir)
 
     for roi in roi_ids:
         print('Running ROI:', roi)
         roi_dir = os.path.join(predict_files_dir, roi)
         model_dir = os.path.join(training_dir, roi, 'Models')
-        # os.chdir(roi_dir)
+        os.chdir(roi_dir)
 
         # configure the covariates to use.
         cov_file_te = os.path.join(roi_dir, 'cov_bspline_te.txt')
@@ -151,12 +130,13 @@ def apply_normative_model_time2(gender, orig_struct_var, show_plots, show_nsubje
         Z_time2[roi] = Z
 
         #create dummy design matrices
-        dummy_cov_file_path= \
-            create_dummy_design_matrix_one_gender(struct_var, agemin, agemax, cov_file_te, spline_order, spline_knots,
+        dummy_cov_file_path_female, dummy_cov_file_path_male= \
+            create_dummy_design_matrix(struct_var, agemin, agemax, cov_file_te, spline_order, spline_knots,
                                                   working_dir)
 
-        plot_data_with_spline_one_gender(gender, 'Postcovid (Test) Data ', struct_var, cov_file_te, resp_file_te,
-                                         dummy_cov_file_path, model_dir, roi, show_plots, working_dir)
+        plot_data_with_spline('Postcovid (Test) Data ', struct_var, cov_file_te, resp_file_te,
+                                         dummy_cov_file_path_female, dummy_cov_file_path_male, model_dir, roi,
+                                        show_plots, working_dir)
 
         mystop=1
 
