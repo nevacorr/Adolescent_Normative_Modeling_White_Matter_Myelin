@@ -8,7 +8,7 @@
 import os
 import pandas as pd
 from matplotlib import pyplot as plt
-from Load_Genz_Data_WWM_MPF import load_genz_data_wm_mpf
+from Load_Genz_Data_WWM_MPF import load_genz_data_wm_mpf_v2, load_genz_data_wm_mpf_v1
 from plot_num_subjs import plot_num_subjs
 from Utility_Functions import makenewdir, movefiles, create_dummy_design_matrix
 from Utility_Functions import plot_data_with_spline, create_design_matrix, read_ages_from_file
@@ -23,11 +23,11 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
 
     # load all brain and behavior data for visit 2
     visit = 2
-    all_data, roi_ids = load_genz_data_wm_mpf(struct_var, visit, data_dir, visit2_datafile, demographics_filename)
+    all_data, roi_ids = load_genz_data_wm_mpf_v2(struct_var, visit, data_dir, visit2_datafile, demographics_filename)
 
     #load brain and behavior data for visit 1
     visit = 1
-    all_v1, roi_v1 = load_genz_data_wm_mpf(struct_var, visit, data_dir, visit1_datafile, demographics_filename)
+    all_v1, roi_v1 = load_genz_data_wm_mpf_v1(struct_var, visit, data_dir, visit1_datafile, demographics_filename)
 
     #extract subject numbers from visit 1 and find subjects in visit 2 that aren't in visit 1
     subjects_visit1 = all_v1['participant_id']

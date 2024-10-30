@@ -15,8 +15,9 @@ from apply_normative_model_time2 import apply_normative_model_time2
 from plot_and_compute_zdistributions import plot_and_compute_zcores_by_gender
 
 struct_var = 'mpf'
-show_plots = 0          #set to 1 to show training and test data ymvs yhat and spline fit plots.
-show_nsubject_plots = 0 #set to 1 to plot number of subjects used in analysis, for each age and gender
+n_splits = 10   #Number of train/test splits
+show_plots = 1          #set to 1 to show training and test data ymvs yhat and spline fit plots.
+show_nsubject_plots = 1 #set to 1 to plot number of subjects used in analysis, for each age and gender
 spline_order = 1        # order of spline to use for model
 spline_knots = 2        # number of knots in spline to use in model
 perform_train_test_split_precovid = 0 #flag indicating whether to split the training set (pre-COVID data) into train and validation data
@@ -28,7 +29,7 @@ subjects_to_exclude_time1 = [106, 107, 111, 121, 122, 126, 127, 208, 209, 210, 2
 subjects_to_exclude_time2 = [105, 117, 119, 201, 209, 215, 301, 306, 319, 321, 325, 406, 418, 421, 515, 527]
 file_with_demographics = 'Adol_CortThick_data.csv'
 
-run_make_norm_model = 0
+run_make_norm_model = 1
 run_apply_norm_model = 1
 calc_brain_age_acc = 0
 calc_CI_age_acc_bootstrap = 0
@@ -37,10 +38,9 @@ working_dir = os.getcwd()
 
 if run_make_norm_model:
 
-    Z_time1, roi_ids = make_time1_normative_model(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
-                           data_dir, working_dir, visit1_datafile, subjects_to_exclude_time1, file_with_demographics)
-
-    Z_time1.drop(columns=['subject_id_test'], inplace=True)
+    roi_ids = make_time1_normative_model(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
+                           data_dir, working_dir, visit1_datafile, visit2_datafile, subjects_to_exclude_time1,
+                           subjects_to_exclude_time2, file_with_demographics, n_splits)
 
 if run_apply_norm_model:
 
