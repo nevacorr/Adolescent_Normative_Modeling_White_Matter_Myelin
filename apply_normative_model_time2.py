@@ -16,36 +16,12 @@ import shutil
 from normative_edited import predict
 
 def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
-                                data_dir, working_dir, visit1_datafile, visit2_datafile, subjects_to_exclude_time2,
-                                demographics_filename):
+                                working_dir, visit2_datafile, subjects_to_exclude_time2,
+                                demographics_filename, all_data_v2, subjects_test, roi_ids):
 
     ######################## Apply Normative Model to Post-Covid Data ############################
 
-    # load all brain and behavior data for visit 2
-    visit = 2
-    all_data, roi_ids = load_genz_data_wm_mpf_v2(struct_var, visit, data_dir, visit2_datafile, demographics_filename)
-
-    #load brain and behavior data for visit 1
-    visit = 1
-    all_v1, roi_v1 = load_genz_data_wm_mpf_v1(struct_var, visit, data_dir, visit1_datafile, demographics_filename)
-
-    #extract subject numbers from visit 1 and find subjects in visit 2 that aren't in visit 1
-    subjects_visit1 = all_v1['participant_id']
-    rows_in_v2_but_not_v1 = all_data[~all_data['participant_id'].isin(all_v1['participant_id'])].dropna()
-    subjs_in_v2_not_v1 = rows_in_v2_but_not_v1['participant_id'].copy()
-    subjs_in_v2_not_v1 = subjs_in_v2_not_v1.astype(int)
-    #only keep subjects at 12, 14 and 16 years of age (subject numbers <400) because cannot model 18 and 20 year olds
-    subjs_in_v2_not_v1 = subjs_in_v2_not_v1[subjs_in_v2_not_v1 < 400]
-
-    #only include subjects that were not in the training or validation set
-    fname_test = '{}/visit1_subjects_used_to_create_normative_model_test_set_{}.txt'.format(working_dir, struct_var)
-    subjects_to_include = pd.read_csv(fname_test, header=None)
-    subjects_to_include = pd.concat([subjects_to_include, subjs_in_v2_not_v1])
-    all_data = all_data[all_data['participant_id'].isin(subjects_to_include[0])]
-    all_data = all_data[all_data['participant_id']<400]
-
-    # Replace gender codes 1=male 2=female with binary values (make male=1 and female=0)
-    all_data.loc[all_data['sex'] == 2, 'sex'] = 0
+    all_data_v2 = all_data_v2[all_data_v2['participant_id']<400]
 
     #make file diretories for output
     makenewdir('{}/predict_files/'.format(working_dir))
@@ -56,20 +32,20 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
     makenewdir('{}/predict_files/{}/response_files'.format(working_dir, struct_var))
 
     # reset indices
-    all_data.reset_index(inplace=True, drop=True)
+    all_data_v2.reset_index(inplace=True, drop=True)
     #read agemin and agemax from file
     agemin, agemax = read_ages_from_file(working_dir, struct_var)
 
     #show number of subjects by gender and age
     if show_nsubject_plots:
-        plot_num_subjs(all_data, 'Subjects with Post-COVID Data\nEvaluated by Model\n'
-                       +' (Total N=' + str(all_data.shape[0]) + ')', struct_var, 'post-covid_allsubj', working_dir)
+        plot_num_subjs(all_data_v2, 'Subjects with Post-COVID Data\nEvaluated by Model\n'
+                       +' (Total N=' + str(all_data_v2.shape[0]) + ')', struct_var, 'post-covid_allsubj', working_dir)
 
     #specify which columns of dataframe to use as covariates
-    X_test = all_data[['agedays', 'sex']]
+    X_test = all_data_v2[['agedays', 'sex']]
 
     #make a matrix of response variables, one for each brain region
-    y_test = all_data.loc[:, roi_ids]
+    y_test = all_data_v2.loc[:, roi_ids]
 
     #specify paths
     training_dir = '{}/data/{}/ROI_models/'.format(working_dir, struct_var)
@@ -104,7 +80,7 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
 
     # Create dataframe to store Zscores
     Z_time2 = pd.DataFrame()
-    Z_time2['participant_id'] = all_data['participant_id'].copy()
+    Z_time2['participant_id'] = all_data_v2['participant_id'].copy()
     Z_time2.reset_index(inplace=True, drop = True)
 
     ####Make Predictions of Brain Structural Measures Post-Covid based on Pre-Covid Normative Model

@@ -11,8 +11,9 @@ from Utility_Functions import create_dummy_design_matrix
 from Utility_Functions import barplot_performance_values, plot_y_v_yhat, makenewdir, movefiles
 from Utility_Functions import write_ages_to_file
 from Load_Genz_Data_WWM_MPF import load_genz_data_wm_mpf_v1, load_genz_data_wm_mpf_v2
+from apply_normative_model_time2 import apply_normative_model_time2
 
-def make_time1_normative_model(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
+def make_and_apply_normative_model(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
                               data_dir, working_dir, datafilename_v1, datafilename_v2, subjects_to_exclude_v1,
                                subjects_to_exclude_v2, demographics_filename, n_splits):
 
@@ -26,11 +27,19 @@ def make_time1_normative_model(struct_var, show_plots, show_nsubject_plots, spli
     all_data_v1.reset_index(inplace=True, drop=True)
     all_data_v1.drop(columns=['visit', 'Age'],inplace=True)
 
-    # Remove subjects to exclude for dataframe with visit 1 data
+    # Create dataframe with just visit 2 data
+    all_data_v2 = all_data_both_visits.copy()
+    all_data_v2 = all_data_v2[all_data_v2['visit'] == 2]
+    all_data_v2.reset_index(inplace=True, drop=True)
+    all_data_v2.drop(columns=['visit', 'Age'],inplace=True)
+
+    # Remove subjects to exclude for dataframes
     all_data_v1 = all_data_v1[~all_data_v1['participant_id'].isin(subjects_to_exclude_v1)]
+    all_data_v2 = all_data_v2[~all_data_v2['participant_id'].isin(subjects_to_exclude_v2)]
 
     # Replace gender codes 1=male 2=female with binary values (make male=1 and female=0)
     all_data_v1.loc[all_data_v1['sex'] == 2, 'sex'] = 0
+    all_data_v2.loc[all_data_v2['sex'] == 2, 'sex'] = 0
 
     # show bar plots with number of subjects per age group in pre-COVID data
     if show_nsubject_plots:
@@ -46,15 +55,11 @@ def make_time1_normative_model(struct_var, show_plots, show_nsubject_plots, spli
     all_subjects = [val for val in all_subjects if (val not in subjects_to_exclude_v1) and (val not in subjects_to_exclude_v2)]
     num_subjects_for_ttsplit = len(all_subjects) - len(sub_v1_only) - len(sub_v2_only)
 
-    # Xsubjects_train, Xsubjects_test = train_test_split(all_data_v1['participant_id'],
-    #                                                 test_size=0.5, random_state=42, stratify=all_data_v1[['sex', 'age']])
     subjects_only_one_visit = sub_v1_only + sub_v2_only
 
     # remove excluded subjects from all_subjects_both_visits_dataframe
     all_data_both_visits = all_data_both_visits[~all_data_both_visits['participant_id'].isin(subjects_to_exclude_v1)]
     all_data_both_visits = all_data_both_visits[~all_data_both_visits['participant_id'].isin(subjects_to_exclude_v2)]
-    # all_data_both_visits = all_data_both_visits[
-    #     (~all_data_both_visits['participant_id'].isin(subjects_to_exclude_v2)) & (all_data_both_visits['visit'] == 2)]
 
     # remove subjects with only data from one visit from alL_subjects_both_visits dataframe
     all_data_both_visits = all_data_both_visits[~all_data_both_visits['participant_id'].isin(subjects_only_one_visit)]
@@ -91,9 +96,13 @@ def make_time1_normative_model(struct_var, show_plots, show_nsubject_plots, spli
     fname_test = '{}/visit1_subjects_test_sets_{}_splits_{}.txt'.format(working_dir, n_splits, struct_var)
     np.save(fname_test,test_set_array)
 
+
+    Z2_all_splits = pd.DataFrame()
     for split in range(n_splits):
         subjects_train = train_set_array[split, :]
+        subjects_test = test_set_array[split, :]
         all_data_v1 = all_data_v1[all_data_v1['participant_id'].isin(subjects_train)]
+        all_data_v2 = all_data_v2[all_data_v2['participant_id'].isin(subjects_test)]
 
         # plot number of subjects of each gender by age who are included in training data set
         if show_nsubject_plots:
@@ -201,4 +210,18 @@ def make_time1_normative_model(struct_var, show_plots, show_nsubject_plots, spli
                 plot_data_with_spline('Training Data', struct_var, cov_file_tr, resp_file_tr, dummy_cov_file_path_female,
                                       dummy_cov_file_path_male, model_dir, roi, show_plots, working_dir)
         mystop=1
-    return roi_ids
+
+        subjects_train = train_set_array[split, :]
+        Z_time2 = apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
+                                    working_dir, datafilename_v2, subjects_to_exclude_v2,
+                                    demographics_filename, all_data_v2, subjects_test, roi_ids)
+
+        Z_time2['split'] = split
+
+        Z2_all_splits = pd.concat([Z2_all_splits, Z_time2], ignore_index=True)
+
+    Z2_all_splits = Z2_all_splits.groupby(by=['participant_id']).mean().drop(columns=['split'])
+
+    Z2_all_splits.reset_index(drop=True, inplace=True)
+
+    return roi_ids, Z2_all_splits
