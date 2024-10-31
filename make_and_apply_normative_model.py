@@ -96,13 +96,19 @@ def make_and_apply_normative_model(struct_var, show_plots, show_nsubject_plots, 
     fname_test = '{}/visit1_subjects_test_sets_{}_splits_{}.txt'.format(working_dir, n_splits, struct_var)
     np.save(fname_test,test_set_array)
 
-
     Z2_all_splits = pd.DataFrame()
+
+    all_data_v1_orig = all_data_v1
+    all_data_v2_orig = all_data_v2
+
     for split in range(n_splits):
         subjects_train = train_set_array[split, :]
         subjects_test = test_set_array[split, :]
-        all_data_v1 = all_data_v1[all_data_v1['participant_id'].isin(subjects_train)]
-        all_data_v2 = all_data_v2[all_data_v2['participant_id'].isin(subjects_test)]
+
+        all_data_v1 = all_data_v1_orig[all_data_v1_orig['participant_id'].isin(subjects_train)]
+        all_data_v2 = all_data_v2_orig[all_data_v2_orig['participant_id'].isin(subjects_test)]
+        all_data_v1.reset_index(drop=True, inplace=True)
+        all_data_v2.reset_index(drop=True, inplace=True)
 
         # plot number of subjects of each gender by age who are included in training data set
         if show_nsubject_plots:
@@ -132,16 +138,8 @@ def make_and_apply_normative_model(struct_var, show_plots, show_nsubject_plots, 
 
             write_ages_to_file(working_dir, agemin, agemax, struct_var)
 
-            # save the subject numbers for the training and validation sets to variables
-            s_index_train = X_train.index.values
-            subjects_train = all_data_v1.loc[s_index_train, 'participant_id'].values
-
             # drop the age column from the train data set because we want to use agedays as a predictor
             X_train.drop(columns=['age'], inplace=True)
-
-            # change the indices in the train data set because nan values were dropped above
-            X_train.reset_index(drop=True, inplace=True)
-            y_train.reset_index(drop=True, inplace=True)
 
             ##########
             # Set up output directories. Save each brain region to its own text file, organized in separate directories,
@@ -222,6 +220,6 @@ def make_and_apply_normative_model(struct_var, show_plots, show_nsubject_plots, 
 
     Z2_all_splits = Z2_all_splits.groupby(by=['participant_id']).mean().drop(columns=['split'])
 
-    Z2_all_splits.reset_index(drop=True, inplace=True)
+    Z2_all_splits.reset_index(inplace=True)
 
     return roi_ids, Z2_all_splits

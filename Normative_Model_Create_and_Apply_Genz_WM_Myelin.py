@@ -15,7 +15,7 @@ from apply_normative_model_time2 import apply_normative_model_time2
 from plot_and_compute_zdistributions import plot_and_compute_zcores_by_gender
 
 struct_var = 'mpf'
-n_splits = 2   #Number of train/test splits
+n_splits = 5   #Number of train/test splits
 show_plots = 0          #set to 1 to show training and test data ymvs yhat and spline fit plots.
 show_nsubject_plots = 1 #set to 1 to plot number of subjects used in analysis, for each age and gender
 spline_order = 1        # order of spline to use for model
@@ -41,22 +41,6 @@ if run_make_norm_model:
                            data_dir, working_dir, visit1_datafile, visit2_datafile, subjects_to_exclude_time1,
                            subjects_to_exclude_time2, file_with_demographics, n_splits)
 
-
-# if calc_brain_age_acc:
-#
-#     calculate_avg_brain_age_acceleration_make_model(gender, orig_struct_var, show_nsubject_plots, show_plots,
-#                                                                spline_order, spline_knots, orig_data_dir, working_dir)
-#
-#     mean_agediff[gender] = calculate_avg_brain_age_acceleration_apply_model(gender, orig_struct_var, show_nsubject_plots, show_plots,
-#                                                            spline_order, spline_knots, orig_data_dir, working_dir, num_permute=0, permute=False, shuffnum=0)
-#
-# if calc_CI_age_acc_bootstrap:
-#
-#     ageacc_from_bootstraps[gender] = calculate_avg_brain_age_acceleration_apply_model_bootstrap(gender, orig_struct_var, show_nsubject_plots, show_plots,
-#                                                        spline_order, spline_knots, orig_data_dir, working_dir, nbootstrap)
-#     # Write age acceleration from bootstrapping to file
-#     with open(f"{working_dir}/ageacceleration_dictionary {nbootstrap} bootstraps.txt", 'w') as f:
-#         for key, value in ageacc_from_bootstraps.items():
-#             f.write('%s:%s\n' % (key, value))
-
     plot_and_compute_zcores_by_gender(Z_time2, struct_var, roi_ids, working_dir)
+
+    mystop = 1

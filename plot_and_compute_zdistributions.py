@@ -205,12 +205,12 @@ def plot_by_gender_no_kde(struct_var, Z_female, Z_male, roi_ids, reject_f, rejec
 def plot_and_compute_zcores_by_gender(Z_time2, struct_var, roi_ids, working_dir):
     #add gender to Z score dataframe
     #females have even subject numbers, males have odd subject numbers
-    Z_time2['gender'] = Z_time2['participant_id'].apply(lambda x: 2 if x % 2 == 0 else 1)
+    Z_time2['gender'] = Z_time2['participant_id'].apply(lambda x: 0 if x % 2 == 0 else 1)
     #move the gender column to the front of the dataframe
     gender = Z_time2.pop('gender')
     Z_time2.insert(1, 'gender', gender)
 
-    Z_female = Z_time2[Z_time2['gender']==2]
+    Z_female = Z_time2[Z_time2['gender']== 0]
     Z_male = Z_time2[Z_time2['gender'] == 1]
 
     p_values_f = []
