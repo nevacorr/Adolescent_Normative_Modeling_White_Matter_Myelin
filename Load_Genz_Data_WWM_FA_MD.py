@@ -7,16 +7,19 @@ import pandas as pd
 from load_raw_data_WM_MPF import load_raw_data_wm_mpf
 from load_genz_tract_profile_data import load_genz_tract_profile_data
 
-def load_genz_data_wm_fa_md(struct_var, path, braindatafilename_v1, braindatafilename_v2, demographics_filename):
+def load_genz_data_wm_fa_md(struct_var, path, fa_braindatafilename_v1, fa_braindatafilename_v2, md_braindatafilename_v1,
+                            md_braindatafilename_v2, demographics_filename):
 
     visit = 1
     # load data from visit 1
-    brain_data_v1_md = load_genz_tract_profile_data('md', visit, path, braindatafilename_v1)
-    brain_data_v1_fa = load_genz_tract_profile_data('fa', visit, path, braindatafilename_v1)
+    brain_data_v1_fa = load_genz_tract_profile_data('fa', visit, path, fa_braindatafilename_v1)
+    brain_data_v1_md = load_genz_tract_profile_data('md', visit, path, md_braindatafilename_v1)
+
     visit = 2
     # load data from visit 2
-    brain_data_v2_md = load_genz_tract_profile_data('md', visit, path, braindatafilename_v2)
-    brain_data_v2_fa = load_genz_tract_profile_data('fa', visit, path, braindatafilename_v2)
+    brain_data_v2_fa = load_genz_tract_profile_data('fa', visit, path, fa_braindatafilename_v2)
+    brain_data_v2_md = load_genz_tract_profile_data('md', visit, path, md_braindatafilename_v2)
+
 
     # put data from both visits in same dataframe
     fa_brain_data = pd.concat([brain_data_v1_fa, brain_data_v2_fa])

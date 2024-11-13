@@ -20,10 +20,10 @@ spline_knots = 2        # number of knots in spline to use in model
 perform_train_test_split_precovid = 0 #flag indicating whether to split the training set (pre-COVID data) into train and validation data
 data_dir = '/home/toddr/neva/PycharmProjects/data_dir'
 
-md_visit1_datafile = 'genz_tract_profile_data/genzMD_tractProfiles_visit1.csv'
-md_visit2_datafile = 'genz_tract_profile_data/genzMD_tractProfiles_visit2.csv'
 fa_visit1_datafile = 'genz_tract_profile_data/genzFA_tractProfiles_visit1.csv'
 fa_visit2_datafile = 'genz_tract_profile_data/genzFA_tractProfiles_visit2.csv'
+md_visit1_datafile = 'genz_tract_profile_data/genzMD_tractProfiles_visit1.csv'
+md_visit2_datafile = 'genz_tract_profile_data/genzMD_tractProfiles_visit2.csv'
 subjects_to_exclude_time1 = []
 subjects_to_exclude_time2 = []
 
@@ -36,7 +36,7 @@ working_dir = os.getcwd()
 if run_make_norm_model:
 
     roi_ids, Z_time2 = make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
-                           data_dir, working_dir, md_visit1_datafile, md_visit2_datafile, fa_visit1_datafile, fa_visit2_datafile,
+                           data_dir, working_dir, fa_visit1_datafile, fa_visit2_datafile, md_visit1_datafile, md_visit2_datafile,
                            subjects_to_exclude_time1, subjects_to_exclude_time2, file_with_demographics, n_splits)
 
     plot_and_compute_zcores_by_gender(Z_time2, struct_var, roi_ids, working_dir)

@@ -15,13 +15,13 @@ from apply_normative_model_time2 import apply_normative_model_time2
 
 
 def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
-                              data_dir, working_dir, md_datafilename_v1, md_datafilename_v2, fa_datafilename_v1,
-                              fa_datafilename_v2, subjects_to_exclude_v1, subjects_to_exclude_v2, demographics_filename,
+                              data_dir, working_dir, fa_datafilename_v1, fa_datafilename_v2, md_datafilename_v1,
+                              md_datafilename_v2, subjects_to_exclude_v1, subjects_to_exclude_v2, demographics_filename,
                               n_splits):
 
     # Load all data
     all_data_both_visits, roi_ids, all_subjects, sub_v1_only, sub_v2_only= load_genz_data_wm_mpf_v1(struct_var, data_dir,
-                                                            datafilename_v1, datafilename_v2, demographics_filename)
+                fa_datafilename_v1, fa_datafilename_v2, md_datafilename_v1, md_datafilename_v2, demographics_filename)
 
     # Create dataframe with just visit 1 data
     all_data_v1 = all_data_both_visits.copy()
