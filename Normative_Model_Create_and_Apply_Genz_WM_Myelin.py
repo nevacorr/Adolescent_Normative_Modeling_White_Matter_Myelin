@@ -42,8 +42,6 @@ elif struct_var == 'mpf':
 file_with_demographics = 'Adol_CortThick_data.csv'
 
 run_make_norm_model = 1
-calc_brain_age_acc = 0
-calc_CI_age_acc_bootstrap = 0
 
 working_dir = os.getcwd()
 
