@@ -14,19 +14,32 @@ from make_and_apply_normative_model import make_and_apply_normative_model
 from apply_normative_model_time2 import apply_normative_model_time2
 from plot_and_compute_zdistributions import plot_and_compute_zcores_by_gender
 
-struct_var = 'mpf'
-n_splits = 5   #Number of train/test splits
-show_plots = 0          #set to 1 to show training and test data ymvs yhat and spline fit plots.
+struct_var = 'fa'
+n_splits = 1   #Number of train/test splits
+show_plots = 1          #set to 1 to show training and test data ymvs yhat and spline fit plots.
 show_nsubject_plots = 1 #set to 1 to plot number of subjects used in analysis, for each age and gender
 spline_order = 1        # order of spline to use for model
 spline_knots = 2        # number of knots in spline to use in model
 perform_train_test_split_precovid = 0 #flag indicating whether to split the training set (pre-COVID data) into train and validation data
 nbootstrap = 1000         #number of bootstrap to use in calculating confidence intervals for age acceleration separately by sex
 data_dir = '/home/toddr/neva/PycharmProjects/data_dir'
-visit1_datafile = 'tableGenzVisit1_allTracts_Oct22.csv'
-visit2_datafile = 'tableGenzVisit2_allTracts_Oct22.csv'
-subjects_to_exclude_time1 = [106, 107, 111, 121, 122, 126, 127, 208, 209, 210, 211, 214, 215, 221, 226, 309, 323, 335, 405, 418, 421, 423, 524]
-subjects_to_exclude_time2 = [105, 117, 119, 201, 209, 215, 301, 306, 319, 321, 325, 406, 418, 421, 515, 527]
+
+if struct_var == 'md':
+    visit1_datafile = 'genz_tract_profile_data/genzMD_tractProfiles_visit1.csv'
+    visit2_datafile = 'genz_tract_profile_data/genzMD_tractProfiles_visit2.csv'
+    subjects_to_exclude_time1 = []
+    subjects_to_exclude_time2 = []
+elif struct_var == 'fa':
+    visit1_datafile = 'genz_tract_profile_data/genzFA_tractProfiles_visit1.csv'
+    visit2_datafile = 'genz_tract_profile_data/genzFA_tractProfiles_visit2.csv'
+    subjects_to_exclude_time1 = []
+    subjects_to_exclude_time2 = []
+elif struct_var == 'mpf':
+    visit1_datafile = 'tableGenzVisit1_allTracts_Oct22.csv'
+    visit2_datafile = 'tableGenzVisit2_allTracts_Oct22.csv'
+    subjects_to_exclude_time1 = [106, 107, 111, 121, 122, 126, 127, 208, 209, 210, 211, 214, 215, 221, 226, 309, 323, 335, 405, 418, 421, 423, 524]
+    subjects_to_exclude_time2 = [105, 117, 119, 201, 209, 215, 301, 306, 319, 321, 325, 406, 418, 421, 515, 527]
+
 file_with_demographics = 'Adol_CortThick_data.csv'
 
 run_make_norm_model = 1

@@ -5,6 +5,7 @@
 
 import pandas as pd
 from load_raw_data_WM_MPF import load_raw_data_wm_mpf
+from load_genz_tract_profile_data import load_genz_tract_profile_data
 
 def load_genz_data_wm_mpf_v2(struct_var, path, braindatafilename_v2, demographics_filename):
 
@@ -37,11 +38,23 @@ def load_genz_data_wm_mpf_v2(struct_var, path, braindatafilename_v2, demographic
 def load_genz_data_wm_mpf_v1(struct_var, path, braindatafilename_v1, braindatafilename_v2,
                              demographics_filename):
 
-    visit =1
+    visit = 1
     # load data from visit 1
-    brain_data_v1 = load_raw_data_wm_mpf(struct_var, 1, path, braindatafilename_v1)
+    if struct_var == 'md':
+        brain_data_v1 = load_genz_tract_profile_data(struct_var, visit, path, braindatafilename_v1)
+    elif struct_var == 'fa':
+        brain_data_v1 = load_genz_tract_profile_data(struct_var, visit, path, braindatafilename_v1)
+    elif struct_var == 'mpf':
+        brain_data_v1 = load_raw_data_wm_mpf(struct_var, visit, path, braindatafilename_v1)
+    visit = 2
     # load data from visit 2
-    brain_data_v2 = load_raw_data_wm_mpf(struct_var, 2, path, braindatafilename_v2)
+    if struct_var == 'md':
+        brain_data_v2 = load_genz_tract_profile_data(struct_var, visit, path, braindatafilename_v2)
+    elif struct_var == 'fa':
+        brain_data_v2 = load_genz_tract_profile_data(struct_var, visit, path, braindatafilename_v2)
+    elif struct_var == 'mpf':
+        brain_data_v2 = load_raw_data_wm_mpf(struct_var, visit, path, braindatafilename_v2)
+
     # put data from both visits in same dataframe
     brain_data = pd.concat([brain_data_v1, brain_data_v2])
     # brain_data['Subject'] = brain_data['Subject'].astype('int64')
