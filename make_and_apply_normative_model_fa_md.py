@@ -6,10 +6,6 @@ import shutil
 from sklearn.model_selection import train_test_split, StratifiedShuffleSplit
 from pcntoolkit.normative import estimate, evaluate
 from plot_num_subjs import plot_num_subjs
-from Utility_Functions import create_design_matrix, plot_data_with_spline
-from Utility_Functions import create_dummy_design_matrix
-from Utility_Functions import barplot_performance_values, plot_y_v_yhat, makenewdir, movefiles
-from Utility_Functions import write_ages_to_file
 from Load_Genz_Data_WWM_FA_MD import load_genz_data_wm_fa_md
 from apply_normative_model_time2 import apply_normative_model_time2
 from make_model import make_model
@@ -108,7 +104,7 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
 
 
     Z2_all_splits_fa = Z2_all_splits_fa.groupby(by=['participant_id']).mean().drop(columns=['split'])
-    Z2_all_splits_md = Z2_all_splits_fa.groupby(by=['participant_id']).mean().drop(columns=['split'])
+    Z2_all_splits_md = Z2_all_splits_md.groupby(by=['participant_id']).mean().drop(columns=['split'])
 
     Z2_all_splits_fa.reset_index(inplace=True)
     Z2_all_splits_md.reset_index(inplace=True)
