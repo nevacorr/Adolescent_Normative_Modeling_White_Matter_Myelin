@@ -35,10 +35,11 @@ working_dir = os.getcwd()
 
 if run_make_norm_model:
 
-    roi_ids, Z_time2 = make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
+    roi_ids, Z_time2_fa, Z_time2_md = make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
                            data_dir, working_dir, fa_visit1_datafile, fa_visit2_datafile, md_visit1_datafile, md_visit2_datafile,
                            subjects_to_exclude_time1, subjects_to_exclude_time2, file_with_demographics, n_splits)
 
-    plot_and_compute_zcores_by_gender(Z_time2, struct_var, roi_ids, working_dir)
+    plot_and_compute_zcores_by_gender(Z_time2_fa, 'fa', roi_ids, working_dir)
+    plot_and_compute_zcores_by_gender(Z_time2_md, 'md', roi_ids, working_dir)
 
     mystop = 1

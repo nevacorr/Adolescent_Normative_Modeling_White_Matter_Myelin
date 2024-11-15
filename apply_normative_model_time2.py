@@ -15,8 +15,7 @@ import shutil
 from normative_edited import predict
 
 def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
-                                working_dir, visit2_datafile, subjects_to_exclude_time2,
-                                demographics_filename, all_data_v2, subjects_test, roi_ids):
+                                working_dir, all_data_v2, roi_ids):
 
     ######################## Apply Normative Model to Post-Covid Data ############################
 
