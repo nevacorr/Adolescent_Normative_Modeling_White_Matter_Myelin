@@ -40,6 +40,10 @@ if run_make_norm_model:
                            subjects_to_exclude_time1, subjects_to_exclude_time2, file_with_demographics, n_splits)
 
     plot_and_compute_zcores_by_gender(Z_time2_fa, 'fa', roi_ids, working_dir)
+
+    mystop=1
+
+    roi_ids = [s.replace('FA', 'MD') for s in roi_ids]
     plot_and_compute_zcores_by_gender(Z_time2_md, 'md', roi_ids, working_dir)
 
     mystop = 1

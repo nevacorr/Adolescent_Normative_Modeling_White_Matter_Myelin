@@ -102,11 +102,4 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
     Z2_all_splits_md = make_model(md_all_data_v1_orig, md_all_data_v2_orig, 'md', n_splits, train_set_array, test_set_array,
                show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids)
 
-
-    Z2_all_splits_fa = Z2_all_splits_fa.groupby(by=['participant_id']).mean().drop(columns=['split'])
-    Z2_all_splits_md = Z2_all_splits_md.groupby(by=['participant_id']).mean().drop(columns=['split'])
-
-    Z2_all_splits_fa.reset_index(inplace=True)
-    Z2_all_splits_md.reset_index(inplace=True)
-
     return roi_ids, Z2_all_splits_fa, Z2_all_splits_md

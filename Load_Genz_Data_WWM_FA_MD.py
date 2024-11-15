@@ -20,7 +20,6 @@ def load_genz_data_wm_fa_md(struct_var, path, fa_braindatafilename_v1, fa_braind
     brain_data_v2_fa = load_genz_tract_profile_data('fa', visit, path, fa_braindatafilename_v2)
     brain_data_v2_md = load_genz_tract_profile_data('md', visit, path, md_braindatafilename_v2)
 
-
     # put data from both visits in same dataframe
     fa_brain_data = pd.concat([brain_data_v1_fa, brain_data_v2_fa])
     md_brain_data = pd.concat([brain_data_v1_md, brain_data_v2_md])
@@ -51,7 +50,7 @@ def load_genz_data_wm_fa_md(struct_var, path, fa_braindatafilename_v1, fa_braind
     subjects_v2_only = subjects_visit2_data_only['subject'].tolist()
 
     # create a list of all the columns to run a normative model for
-    roi_ids = [col for col in fa_all_data.columns if struct_var.upper() in col]
+    roi_ids = [col for col in fa_all_data.columns if 'FA' in col]
 
     fa_all_data.rename(columns={'subject': 'participant_id', 'gender':'sex', 'agegroup': 'age'}, inplace=True)
     md_all_data.rename(columns={'subject': 'participant_id', 'gender': 'sex', 'agegroup': 'age'}, inplace=True)

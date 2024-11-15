@@ -39,6 +39,9 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
         makenewdir('{}/data/{}/covariate_files'.format(working_dir, struct_var_metric))
         makenewdir('{}/data/{}/response_files'.format(working_dir, struct_var_metric))
 
+        if struct_var_metric != 'fa':
+            roi_ids = [s.replace('FA', struct_var_metric.upper()) for s in roi_ids]
+
         # separate the brain features (response variables) and predictors (age) in to separate dataframes
         all_data_features = all_data_v1.loc[:, roi_ids]
         all_data_covariates = all_data_v1[['age', 'agedays', 'sex']]
@@ -89,8 +92,7 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
 
         # create dataframe with subject numbers to put the Z scores in.
         subjects_train = subjects_train.reshape(-1, 1)
-        Z_score_train_matrix_fa = pd.DataFrame(subjects_train, columns=['subject_id_train'])
-        Z_score_train_matrix_md = pd.DataFrame(subjects_train, columns=['subject_id_train'])
+        Z_score_train_matrix = pd.DataFrame(subjects_train, columns=['subject_id_train'])
 
         # Estimate the normative model using a for loop to iterate over brain regions. The estimate function uses a few
         # specific arguments that are worth commenting on:
@@ -133,5 +135,9 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
                                     working_dir, all_data_v2, roi_ids)
 
         Z2_all_splits = pd.concat([Z2_all_splits, Z_time2], ignore_index=True)
+
+    # Z2_all_splits = Z2_all_splits.groupby(by=['participant_id']).mean().drop(columns=['split'])
+    Z2_all_splits = Z2_all_splits.groupby(by=['participant_id']).mean()
+    Z2_all_splits.reset_index(inplace=True)
 
     return Z2_all_splits
