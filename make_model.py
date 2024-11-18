@@ -134,10 +134,12 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
         Z_time2 = apply_normative_model_time2(struct_var_metric, show_plots, show_nsubject_plots, spline_order, spline_knots,
                                     working_dir, all_data_v2, roi_ids)
 
+        Z_time2['split'] = split
+
         Z2_all_splits = pd.concat([Z2_all_splits, Z_time2], ignore_index=True)
 
     # Z2_all_splits = Z2_all_splits.groupby(by=['participant_id']).mean().drop(columns=['split'])
-    Z2_all_splits = Z2_all_splits.groupby(by=['participant_id']).mean()
-    Z2_all_splits.reset_index(inplace=True)
+    # Z2_all_splits = Z2_all_splits.groupby(by=['participant_id']).mean()
+    # Z2_all_splits.reset_index(inplace=True)
 
     return Z2_all_splits

@@ -44,7 +44,7 @@ def one_plot(ax, ptitle, ptitleB, Z_male_region, Z_female_region, binedges, zlim
     ax.legend([handles[idx] for idx in order], [labels[idx] for idx in order], fontsize=10)
     # plt.tight_layout()
 
-def plot_separate_figures_sorted(df, Z_female, Z_male, binedges, zlim, struct_var,f, nokde, working_dir):
+def plot_separate_figures_sorted(df, Z_female, Z_male, binedges, zlim, struct_var,f, nokde, working_dir, nsplits):
     sig_string_list = []
     bold_string_list = []
     if nokde == 1:
@@ -115,7 +115,7 @@ def plot_separate_figures_sorted(df, Z_female, Z_male, binedges, zlim, struct_va
             elif region_for_title == 'isthmuscingulate':
                 region_for_title = 'isthmus cingulate'
 
-        bold_string = f'{hemi}{region_for_title}\n'
+        bold_string = f'{hemi}{region_for_title} nsplits={nsplits}\n'
         not_bold_string = (f'Female mean = {zmean_f:.2}, $\\it{{p}}$ = {df.loc[i, "pfemale"]:.2e}\n '
                            f'Male mean = {zmean_m:.2}, $\\it{{p}}$ = {df.loc[i, "pmale"]:.2e}')
         bold_string_list.append(bold_string)
@@ -168,7 +168,7 @@ def plot_separate_figures_sorted(df, Z_female, Z_male, binedges, zlim, struct_va
     return fignum
 
 def plot_by_gender_no_kde(struct_var, Z_female, Z_male, roi_ids, reject_f, reject_m, pvals_corrected_f,
-                          pvals_corrected_m, binedges, nokde, working_dir):
+                          pvals_corrected_m, binedges, nokde, working_dir, nsplits):
 
     zmax = math.ceil(binedges[-1])
     zmin = math.floor(binedges[0])
@@ -194,15 +194,15 @@ def plot_by_gender_no_kde(struct_var, Z_female, Z_male, roi_ids, reject_f, rejec
     rois_pvals_notsig.sort_values(by=['pfemale'], axis=0, inplace=True, ignore_index=True)
 
     #plot separate figures for each category
-    fignum=plot_separate_figures_sorted(rois_pvals_sig_femalesigonly, Z_female, Z_male, binedges, zlim, struct_var,0, nokde, working_dir)
-    fignum=plot_separate_figures_sorted(rois_pvals_sig_allsig, Z_female, Z_male, binedges, zlim, struct_var, fignum, nokde, working_dir)
-    fignum=plot_separate_figures_sorted(rois_pvals_sig_malessigonly, Z_female, Z_male, binedges, zlim,struct_var,fignum, nokde, working_dir)
-    fignum=plot_separate_figures_sorted(rois_pvals_notsig, Z_female, Z_male, binedges, zlim,struct_var,fignum, nokde, working_dir)
+    fignum=plot_separate_figures_sorted(rois_pvals_sig_femalesigonly, Z_female, Z_male, binedges, zlim, struct_var,0, nokde, working_dir, nsplits)
+    fignum=plot_separate_figures_sorted(rois_pvals_sig_allsig, Z_female, Z_male, binedges, zlim, struct_var, fignum, nokde, working_dir, nsplits)
+    fignum=plot_separate_figures_sorted(rois_pvals_sig_malessigonly, Z_female, Z_male, binedges, zlim,struct_var,fignum, nokde, working_dir, nsplits)
+    fignum=plot_separate_figures_sorted(rois_pvals_notsig, Z_female, Z_male, binedges, zlim,struct_var,fignum, nokde, working_dir, nsplits)
 
     plt.show()
     mystop=1
 
-def plot_and_compute_zcores_by_gender(Z_time2, struct_var, roi_ids, working_dir):
+def plot_and_compute_zcores_by_gender(Z_time2, struct_var, roi_ids, working_dir, nsplits):
     #add gender to Z score dataframe
     #females have even subject numbers, males have odd subject numbers
     Z_time2['gender'] = Z_time2['participant_id'].apply(lambda x: 0 if x % 2 == 0 else 1)
@@ -248,5 +248,5 @@ def plot_and_compute_zcores_by_gender(Z_time2, struct_var, roi_ids, working_dir)
 
     nokde=1
     plot_by_gender_no_kde(struct_var, Z_female, Z_male, roi_ids, reject_f, reject_m, pvals_corrected_f,
-                          pvals_corrected_m, binedges, nokde, working_dir)
+                          pvals_corrected_m, binedges, nokde, working_dir, nsplits)
 
