@@ -44,16 +44,23 @@ def plot_tracts_by_sex(visit, tracts_to_plot, visit_num):
     for tract in tracts_to_plot:
         cols_tract = [col for col in df_dict[tract] if tract in col]
         plt.figure()
-        x = range(1, len(cols_tract)+1)
+        x = range(21, len(cols_tract)+1-22)
 
         # Separate data by sex
-        data_sex_0 = df_dict[tract].loc[df_dict[tract]['Sex'] == 0, cols_tract].T
-        data_sex_1 = df_dict[tract].loc[df_dict[tract]['Sex'] == 1, cols_tract].T
+        data_sex_f = df_dict[tract].loc[df_dict[tract]['Sex'] == 0, cols_tract].T
+        data_sex_m = df_dict[tract].loc[df_dict[tract]['Sex'] == 1, cols_tract].T
+        data_sex_f_remove_ends = data_sex_f.iloc[21:79,:]
+        data_sex_m_remove_ends = data_sex_m.iloc[21:79, :]
 
-        # Plot all rows for sex=0
-        plt.plot(x, data_sex_0, color="red", alpha=0.3)
-        # Plot all rows for sex=1
-        plt.plot(x, data_sex_1, color="blue", alpha=0.3)
+        mean_data_sex_f = data_sex_f_remove_ends.mean(axis=1)
+        mean_data_sex_m = data_sex_m_remove_ends.mean(axis=1)
+
+        # Plot all rows for both sexes
+        plt.plot(x, data_sex_f_remove_ends, color="red", alpha=0.3)
+        plt.plot(x, data_sex_m_remove_ends, color="blue", alpha=0.3)
+        # Plot mean waveforms
+        plt.plot(x, mean_data_sex_f, color='red', linewidth=5, label='Female')
+        plt.plot(x, mean_data_sex_m, color='blue', linewidth=5, label='Male')
         # Add labels and legend
         plt.xlabel('Node')
         plt.ylabel(f'{metric} Value')
