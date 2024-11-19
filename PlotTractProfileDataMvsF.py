@@ -1,20 +1,24 @@
 import pandas as pd
 import os
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 data_dir = '/home/toddr/neva/PycharmProjects/data_dir'
-fa_visit1_datafile = 'genz_tract_profile_data/genzFA_tractProfiles_visit1.csv'
-fa_visit2_datafile = 'genz_tract_profile_data/genzFA_tractProfiles_visit2.csv'
+visit1_datafile = 'genz_tract_profile_data/genzFA_tractProfiles_visit1.csv'
+visit2_datafile = 'genz_tract_profile_data/genzFA_tractProfiles_visit2.csv'
 
-tracts_to_plot = ['Right ILF', 'Right IFOF']
+variables_to_keep = ['Subject', 'Right ILF', 'Right IFOF']
 metric = 'FA'
 
-fa_visit1 = pd.read_csv(os.path.join(data_dir, fa_visit1_datafile))
-fa_visit2 = pd.read_csv(os.path.join(data_dir, fa_visit2_datafile))
+visit1 = pd.read_csv(os.path.join(data_dir, visit1_datafile))
+visit2 = pd.read_csv(os.path.join(data_dir, visit2_datafile))
 
-fa_visit1['Subject'] = fa_visit1['Subject'].str.replace('sub-genz', '').astype(int)
-fa_visit2['Subject'] = fa_visit2['Subject'].str.replace('sub-genz', '').astype(int)
+visit1['Subject'] = visit1['Subject'].str.replace('sub-genz', '').astype(int)
+visit2['Subject'] = visit2['Subject'].str.replace('sub-genz', '').astype(int)
 
-
+tracts_to_remove = [col for col in visit1.columns if not any(sub in col for sub in variables_to_keep)]
+visit1.drop(columns=tracts_to_remove, inplace=True)
+visit2.drop(columns=tracts_to_remove, inplace=True)
 
 def add_sex(df):
     df['Sex'] = df.apply(lambda row: 0 if row['Subject'] % 2 == 0 else 1, axis=1)
@@ -22,11 +26,46 @@ def add_sex(df):
     df.insert(1, 'Sex', sex)
     return df
 
-fa_visit1 = add_sex(fa_visit1)
-fa_visit2 = add_sex(fa_visit2)
+# Make a separate dataframe for each tract to plot
+variables_to_keep.remove('Subject')
+tracts_to_plot = variables_to_keep
 
-# plot male vs female trajectories for tract metric for tracts of interest
+def plot_tracts_by_sex(visit, tracts_to_plot, visit_num):
+    # Make a dictionary of dataframes
+    df_dict = {}
+    for tract in tracts_to_plot:
+        cols_tract = [col for col in visit.columns if tract in col]
+        tract_df = pd.DataFrame()
+        tract_df['Subject'] = visit['Subject'].copy()
+        tract_df = add_sex(tract_df)
+        tract_df[cols_tract] = visit[cols_tract].copy()
+        df_dict[tract] = tract_df
 
+    for tract in tracts_to_plot:
+        cols_tract = [col for col in df_dict[tract] if tract in col]
+        plt.figure()
+        x = range(1, len(cols_tract)+1)
 
+        # Separate data by sex
+        data_sex_0 = df_dict[tract].loc[df_dict[tract]['Sex'] == 0, cols_tract].T
+        data_sex_1 = df_dict[tract].loc[df_dict[tract]['Sex'] == 1, cols_tract].T
+
+        # Plot all rows for sex=0
+        plt.plot(x, data_sex_0, color="red", alpha=0.3)
+        # Plot all rows for sex=1
+        plt.plot(x, data_sex_1, color="blue", alpha=0.3)
+        # Add labels and legend
+        plt.xlabel('Node')
+        plt.ylabel(f'{metric} Value')
+        plt.title(f'Visit {visit_num} {tract} {metric}')
+        plt.legend()
+        plt.grid(alpha=0.3)
+        # Show the plot
+        plt.show(block=False)
+
+plot_tracts_by_sex(visit1, tracts_to_plot, 1)
+plot_tracts_by_sex(visit2, tracts_to_plot, 2)
+plt.show()
 
 mystop=1
+
