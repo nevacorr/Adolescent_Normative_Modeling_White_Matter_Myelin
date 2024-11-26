@@ -13,8 +13,8 @@ from make_model import make_model
 
 def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
                               raw_data_dir, working_dir, fa_datafilename_v1, fa_datafilename_v2, md_datafilename_v1,
-                              md_datafilename_v2, mpf_datafilename_v1, mpf_datafilename_v2, subjects_to_exclude_v1,
-                              subjects_to_exclude_v2, demographics_filename, n_splits):
+                              md_datafilename_v2, mpf_datafilename_v1, mpf_datafilename_v2, subjects_to_exclude_v1, subjects_to_exclude_v2,
+                              mpf_subjects_to_exclude_v1, mpf_subjects_to_exclude_v2, demographics_filename, n_splits):
 
     # Load all data
     fa_all_data_both_visits, md_all_data_both_visits, roi_ids, all_subjects, sub_v1_only, sub_v2_only = (
@@ -24,12 +24,6 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
     mpf_all_data_both_visits, all_subjects_mpf, sub_v1_only, sub_v2_only = (
         load_genz_data_wm_mpf_v1('mpf', raw_data_dir, mpf_datafilename_v1, mpf_datafilename_v2,
                                              demographics_filename ))
-
-    # MPF data does not have uncinate so remove from fa and md dataframes and roi_ids
-    fa_all_data_both_visits.drop(columns=['Left Uncinate FA', 'Right Uncinate FA'], inplace=True)
-    md_all_data_both_visits.drop(columns=['Left Uncinate MD', 'Right Uncinate MD'], inplace=True)
-    roi_ids.remove('Left Uncinate FA')
-    roi_ids.remove('Right Uncinate FA')
 
     def process_dataframe(data, visit, subjects_to_exclude):
         df = data.copy()
@@ -44,8 +38,8 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
     fa_all_data_v2 = process_dataframe(fa_all_data_both_visits, 2, subjects_to_exclude_v2)
     md_all_data_v1 = process_dataframe(md_all_data_both_visits, 1, subjects_to_exclude_v1)
     md_all_data_v2 = process_dataframe(md_all_data_both_visits, 2, subjects_to_exclude_v2)
-    mpf_all_data_v1 = process_dataframe(mpf_all_data_both_visits, 1, subjects_to_exclude_v1)
-    mpf_all_data_v2 = process_dataframe(mpf_all_data_both_visits, 2, subjects_to_exclude_v2)
+    mpf_all_data_v1 = process_dataframe(mpf_all_data_both_visits, 1, subjects_to_exclude=mpf_subjects_to_exclude_v1)
+    mpf_all_data_v2 = process_dataframe(mpf_all_data_both_visits, 2, subjects_to_exclude=mpf_subjects_to_exclude_v2)
 
     # show bar plots with number of subjects per age group in pre-COVID data
     if show_nsubject_plots:
@@ -117,6 +111,8 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
     Z2_all_splits_md = make_model(md_all_data_v1_orig, md_all_data_v2_orig, 'md', n_splits, train_set_array, test_set_array,
                show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids)
 
+    roi_ids.remove('Left Uncinate FA')
+    roi_ids.remove('Right Uncinate FA')
     Z2_all_splits_mpf = make_model(mpf_all_data_v1_orig, mpf_all_data_v2_orig, 'mpf', n_splits, train_set_array, test_set_array,
                show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids)
 
