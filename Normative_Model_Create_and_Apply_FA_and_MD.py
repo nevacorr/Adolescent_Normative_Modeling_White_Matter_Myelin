@@ -8,11 +8,13 @@
 ######
 
 import os
+import matplotlib.pyplot as plt
 from plot_and_compute_zdistributions import plot_and_compute_zcores_by_gender
 from make_and_apply_normative_model_fa_md import make_and_apply_normative_model_fa_md
+from compute_df_correlations import compute_df_correlations
 
 struct_var = 'fa_and_md'
-n_splits = 1   #Number of train/test splits
+n_splits = 100   #Number of train/test splits
 show_plots = 0          #set to 1 to show training and test data ymvs yhat and spline fit plots.
 show_nsubject_plots = 0 #set to 1 to plot number of subjects used in analysis, for each age and gender
 spline_order = 1        # order of spline to use for model
@@ -39,11 +41,20 @@ if run_make_norm_model:
                            data_dir, working_dir, fa_visit1_datafile, fa_visit2_datafile, md_visit1_datafile, md_visit2_datafile,
                            subjects_to_exclude_time1, subjects_to_exclude_time2, file_with_demographics, n_splits)
 
-    plot_and_compute_zcores_by_gender(Z_time2_fa, 'fa', roi_ids, working_dir)
+    compute_df_correlations(Z_time2_fa, Z_time2_md)
 
-    mystop=1
+    plt.show(block=False)
+
+    Z_time2_fa = Z_time2_fa.groupby(by=['participant_id']).mean().drop(columns=['split'])
+    Z_time2_md = Z_time2_md.groupby(by=['participant_id']).mean().drop(columns=['split'])
+    Z_time2_fa.reset_index(inplace=True)
+    Z_time2_md.reset_index(inplace=True)
+
+    plot_and_compute_zcores_by_gender(Z_time2_fa, 'fa', roi_ids, working_dir, n_splits)
 
     roi_ids = [s.replace('FA', 'MD') for s in roi_ids]
-    plot_and_compute_zcores_by_gender(Z_time2_md, 'md', roi_ids, working_dir)
+    plot_and_compute_zcores_by_gender(Z_time2_md, 'md', roi_ids, working_dir, n_splits)
 
-    mystop = 1
+    plt.show()
+
+    mystop=1
