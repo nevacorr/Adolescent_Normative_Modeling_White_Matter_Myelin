@@ -58,3 +58,47 @@ def load_genz_data_wm_fa_md(struct_var, path, fa_braindatafilename_v1, fa_braind
     all_subjects = fa_all_data['participant_id'].unique().tolist()
 
     return fa_all_data, md_all_data, roi_ids, all_subjects, subjects_v1_only, subjects_v2_only
+
+def load_genz_data_wm_mpf_v1(struct_var, path, braindatafilename_v1, braindatafilename_v2,
+                             demographics_filename):
+
+    visit = 1
+    # load data from visit 1
+    brain_data_v1 = load_raw_data_wm_mpf(struct_var, visit, path, braindatafilename_v1)
+    visit = 2
+    # load data from visit 2
+    brain_data_v2 = load_raw_data_wm_mpf(struct_var, visit, path, braindatafilename_v2)
+
+    # put data from both visits in same dataframe
+    brain_data = pd.concat([brain_data_v1, brain_data_v2])
+    # brain_data['Subject'] = brain_data['Subject'].astype('int64')
+    # get demographic data
+    demo_data = pd.read_csv(f'{path}/{demographics_filename}')
+    demo_to_keep = ['subject', 'visit', 'gender', 'agemonths', 'agedays', 'agegroup']
+    cols_to_drop = [item for item in demo_data.columns if item not in demo_to_keep]
+    demo_data.drop(columns=cols_to_drop, inplace=True)
+    demo_data.dropna(inplace=True, ignore_index=True)
+    columns_to_convert = demo_data.columns.difference(['subject'])
+    demo_data[columns_to_convert] = demo_data[columns_to_convert].astype('int64')
+
+    # merge demo data with brain data
+    brain_data.rename(columns={'Subject': 'subject', 'Visit': 'visit'}, inplace=True)
+    all_data = pd.merge(demo_data, brain_data, how='right', on=['subject', 'visit'])
+    all_data.sort_values(by='subject', inplace=True, ignore_index=True)
+
+    unique_subjects = all_data['subject'].value_counts()
+    unique_subjects = unique_subjects[unique_subjects == 1].index
+    subjects_with_one_dataset = all_data[all_data['subject'].isin(unique_subjects)]
+    subjects_visit1_data_only = subjects_with_one_dataset[subjects_with_one_dataset['visit'] == 1]
+    subjects_visit2_data_only = subjects_with_one_dataset[subjects_with_one_dataset['visit'] == 2]
+    subjects_v1_only = subjects_visit1_data_only['subject'].tolist()
+    subjects_v2_only = subjects_visit2_data_only['subject'].tolist()
+
+    # create a list of all the columns to run a normative model for
+    roi_ids = [col for col in all_data.columns if struct_var.upper() in col]
+
+    all_data.rename(columns={'subject': 'participant_id', 'gender':'sex', 'agegroup': 'age'}, inplace=True)
+
+    all_subjects = all_data['participant_id'].unique().tolist()
+
+    return all_data, all_subjects, subjects_v1_only, subjects_v2_only
