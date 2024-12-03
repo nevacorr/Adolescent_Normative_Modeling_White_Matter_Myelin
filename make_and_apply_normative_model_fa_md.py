@@ -9,6 +9,7 @@ from plot_num_subjs import plot_num_subjs
 from Load_Genz_Data_WWM_FA_MD import load_genz_data_wm_fa_md, load_genz_data_wm_mpf_v1
 from apply_normative_model_time2 import apply_normative_model_time2
 from make_model import make_model
+from Utility_Functions import makenewdir
 
 
 def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
@@ -38,8 +39,32 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
     fa_all_data_v2 = process_dataframe(fa_all_data_both_visits, 2, subjects_to_exclude_v2)
     md_all_data_v1 = process_dataframe(md_all_data_both_visits, 1, subjects_to_exclude_v1)
     md_all_data_v2 = process_dataframe(md_all_data_both_visits, 2, subjects_to_exclude_v2)
-    mpf_all_data_v1 = process_dataframe(mpf_all_data_both_visits, 1, subjects_to_exclude=mpf_subjects_to_exclude_v1)
-    mpf_all_data_v2 = process_dataframe(mpf_all_data_both_visits, 2, subjects_to_exclude=mpf_subjects_to_exclude_v2)
+    mpf_all_data_v1 = process_dataframe(mpf_all_data_both_visits, 1, mpf_subjects_to_exclude_v1)
+    mpf_all_data_v2 = process_dataframe(mpf_all_data_both_visits, 2, mpf_subjects_to_exclude_v2)
+
+    # make directories to store files for model creation
+    dirpath = os.path.join(working_dir, 'data')
+    try:
+        shutil.rmtree(dirpath)
+        print(f"Directory '{dirpath}' and its contents have been removed.")
+    except FileNotFoundError:
+        print(f"Directory '{dirpath}' does not exist.")
+    makenewdir('{}/data/'.format(working_dir))
+    for struct_var_metric in ['fa', 'md', 'mpf']:
+        makenewdir('{}/data/{}'.format(working_dir, struct_var_metric))
+        makenewdir('{}/data/{}/plots'.format(working_dir, struct_var_metric))
+
+    #make file diretories for model tssting
+    dirpath = os.path.join(working_dir, 'predict_files')
+    try:
+        shutil.rmtree(dirpath)
+        print(f"Directory '{dirpath}' and its contents have been removed.")
+    except FileNotFoundError:
+        print(f"Directory '{dirpath}' does not exist.")
+    makenewdir('{}/predict_files/'.format(working_dir))
+    for struct_var_metric in ['fa', 'md', 'mpf']:
+        makenewdir('{}/predict_files/{}'.format(working_dir, struct_var_metric))
+        makenewdir('{}/predict_files/{}/plots'.format(working_dir, struct_var_metric))
 
     # show bar plots with number of subjects per age group in pre-COVID data
     if show_nsubject_plots:
@@ -74,7 +99,7 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
     fa_all_data_all_visits = fa_all_data_both_visits[fa_all_data_both_visits['visit']==1]
 
     # Initialize StratifiedShuffleSplit for equal train/test sizes
-    splitter = StratifiedShuffleSplit(n_splits=n_splits, test_size=0.64, random_state=42)
+    splitter = StratifiedShuffleSplit(n_splits=n_splits, test_size=0.64, random_state=1)
 
     train_set_list = []
     test_set_list = []
@@ -111,9 +136,10 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
     Z2_all_splits_md = make_model(md_all_data_v1_orig, md_all_data_v2_orig, 'md', n_splits, train_set_array, test_set_array,
                show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids)
 
-    roi_ids.remove('Left Uncinate FA')
-    roi_ids.remove('Right Uncinate FA')
+    roi_ids_tmp = roi_ids.copy()
+    roi_ids_tmp.remove('Left Uncinate FA')
+    roi_ids_tmp.remove('Right Uncinate FA')
     Z2_all_splits_mpf = make_model(mpf_all_data_v1_orig, mpf_all_data_v2_orig, 'mpf', n_splits, train_set_array, test_set_array,
-               show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids)
+               show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids_tmp)
 
-    return roi_ids, Z2_all_splits_fa, Z2_all_splits_md, Z2_all_splits_mpf
+    return roi_ids, Z2_all_splits_fa, Z2_all_splits_md , Z2_all_splits_mpf

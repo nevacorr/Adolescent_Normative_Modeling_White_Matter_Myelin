@@ -216,11 +216,13 @@ def plot_and_compute_zcores_by_gender(Z_time2, struct_var, roi_ids, working_dir,
     p_values_f = []
     p_values_m = []
     for region in roi_ids:
-        zf = Z_female[region].values
+        zf_orig = Z_female[region].values
+        zf = zf_orig[~np.isnan(zf_orig)]
         t_statistic_f, p_value_f = stats.ttest_1samp(zf, popmean=0, nan_policy='raise')
         p_values_f.append(p_value_f)
 
-        zm = Z_male[region].values
+        zm_orig = Z_male[region].values
+        zm = zm_orig[~np.isnan(zm_orig)]
         t_statistic_m, p_value_m = stats.ttest_1samp(zm, popmean=0, nan_policy='raise')
         p_values_m.append(p_value_m)
 

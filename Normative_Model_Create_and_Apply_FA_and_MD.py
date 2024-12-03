@@ -14,7 +14,7 @@ from make_and_apply_normative_model_fa_md import make_and_apply_normative_model_
 from compute_df_correlations import compute_df_correlations
 
 struct_var = 'fa_and_md_and_mpf'
-n_splits = 1   #Number of train/test splits
+n_splits = 100   #Number of train/test splits
 show_plots = 0          #set to 1 to show training and test data ymvs yhat and spline fit plots.
 show_nsubject_plots = 0 #set to 1 to plot number of subjects used in analysis, for each age and gender
 spline_order = 1        # order of spline to use for model
@@ -53,16 +53,22 @@ if run_make_norm_model:
 
     Z_time2_fa = Z_time2_fa.groupby(by=['participant_id']).mean().drop(columns=['split'])
     Z_time2_md = Z_time2_md.groupby(by=['participant_id']).mean().drop(columns=['split'])
+    Z_time2_mpf = Z_time2_mpf.groupby(by=['participant_id']).mean().drop(columns=['split'])
     Z_time2_fa.reset_index(inplace=True)
     Z_time2_md.reset_index(inplace=True)
+    Z_time2_mpf.reset_index(inplace=True)
 
     plot_and_compute_zcores_by_gender(Z_time2_fa, 'fa', roi_ids, working_dir, n_splits)
 
-    roi_ids = [s.replace('FA', 'MD') for s in roi_ids]
-    plot_and_compute_zcores_by_gender(Z_time2_md, 'md', roi_ids, working_dir, n_splits)
+    roi_ids_md = roi_ids.copy()
+    roi_ids_md = [s.replace('FA', 'MD') for s in roi_ids_md]
+    plot_and_compute_zcores_by_gender(Z_time2_md, 'md', roi_ids_md, working_dir, n_splits)
 
-    roi_ids = [s.replace('MD', 'MPF') for s in roi_ids]
-    plot_and_compute_zcores_by_gender(Z_time2_mpf, 'mpf', roi_ids, working_dir, n_splits)
+    roi_ids_mpf = roi_ids.copy()
+    roi_ids_mpf.remove('Left Uncinate FA')
+    roi_ids_mpf.remove('Right Uncinate FA')
+    roi_ids_mpf = [s.replace('FA', 'MPF') for s in roi_ids_mpf]
+    plot_and_compute_zcores_by_gender(Z_time2_mpf, 'mpf', roi_ids_mpf, working_dir, n_splits)
 
     plt.show()
 

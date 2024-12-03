@@ -8,7 +8,7 @@ def load_genz_tract_profile_data(struct_var, visit, data_dir, datafilename):
     data_orig = pd.read_csv(f'{data_dir}/{datafilename}')
 
     # Define regex patterns for columns to remove (nodes 1-20 and 81-100)
-    pattern_to_remove = r'_([1-9]|1[0-9]|2[0-1]|8[1-9]|9[0-9]|100)$'
+    pattern_to_remove = r'_(?:[1-9]|1[0-9]|20|8[1-9]|9[0-9]|100)$'
 
     # Filter the dataframe to keep only columns that don't match the pattern
     data = data_orig[data_orig.columns[~data_orig.columns.str.contains(pattern_to_remove)]]
@@ -56,6 +56,7 @@ def load_genz_tract_profile_data(struct_var, visit, data_dir, datafilename):
 
     avgdf.insert(2, 'Visit', visit)
 
+    # Average values for all nodes in each region for each subject
     for region in unique_region_names:
         if struct_var == 'md':
             cols = [col for col in data.columns if col.startswith(region.rstrip(' MD')) ]
@@ -63,6 +64,6 @@ def load_genz_tract_profile_data(struct_var, visit, data_dir, datafilename):
             cols = [col for col in data.columns if col.startswith(region.rstrip(' FA'))]
         avgdf[region] = data[cols].mean(axis=1)
 
-    clean_df = avgdf.dropna()
+    # clean_df = avgdf.dropna()
 
-    return clean_df
+    return avgdf

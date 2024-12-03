@@ -31,10 +31,6 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
                                                    '(Total N=' + str(all_data_v1.shape[0]) + ')', struct_var_metric,
                            'pre-covid_train', working_dir)
 
-        # make directories to store files
-        makenewdir('{}/data/'.format(working_dir))
-        makenewdir('{}/data/{}'.format(working_dir, struct_var_metric))
-        makenewdir('{}/data/{}/plots'.format(working_dir, struct_var_metric))
         makenewdir('{}/data/{}/ROI_models'.format(working_dir, struct_var_metric))
         makenewdir('{}/data/{}/covariate_files'.format(working_dir, struct_var_metric))
         makenewdir('{}/data/{}/response_files'.format(working_dir, struct_var_metric))
@@ -64,31 +60,47 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
         # Set up output directories. Save each brain region to its own text file, organized in separate directories,
         # because for each response variable Y (brain region) we fit a separate normative mode
         ##########
-        for c in y_train.columns:
-            X_train.to_csv(f'{working_dir}/cov_tr.txt', sep='\t', header=False, index=False)
 
-            y_train[c].to_csv(f'{working_dir}/resp_tr_' + c + '.txt', header=False, index=False)
+        # Check for nan values in y_train for each region. If nan value exists, remove before writing y_train for that
+        # region to file. Also remove the corresponding covariate values for that subject.
+        for c in y_train.columns:
+
+            y_train_nan_index = y_train[y_train[c].isna()].index.to_list()
+
+            X_train_copy = X_train.copy()
+            y_train_copy = y_train.copy()
+
+            # If there are nan values for this region remove this subject from X_train and y_train for this region only
+            if len(y_train_nan_index) == 0:
+                X_train_to_file = X_train_copy
+                y_train_to_file_region = y_train_copy.loc[:,c]
+            else:
+                X_train_to_file = X_train_copy.drop(labels=y_train_nan_index).reset_index(drop=True)
+                y_train_to_file_region = y_train_copy.loc[:,c].drop(labels=y_train_nan_index).reset_index(drop=True)
+
+            X_train_to_file.to_csv(f'{working_dir}/cov_tr_' + c + '.txt', sep='\t', header=False, index=False)
+            y_train_to_file_region.to_csv(f'{working_dir}/resp_tr_' + c + '.txt', header=False, index=False)
             y_train.to_csv(f'{working_dir}/resp_tr.txt', sep='\t', header=False, index=False)
 
         for i in roi_ids:
             roidirname = '{}/data/{}/ROI_models/{}'.format(working_dir, struct_var_metric, i)
             makenewdir(roidirname)
             cov_tr_filepath = roidirname + '/cov_tr.txt'
-            shutil.copyfile("{}/cov_tr.txt".format(working_dir), cov_tr_filepath)
+            shutil.copyfile("{}/cov_tr_{}.txt".format(working_dir, i), cov_tr_filepath)
 
             resp_tr_filename = "{}/resp_tr_{}.txt".format(working_dir, i)
             resp_tr_filepath = roidirname + '/resp_tr.txt'
             shutil.copyfile(resp_tr_filename, resp_tr_filepath)
 
-        movefiles("{}/*_resp_*.txt".format(working_dir), "{}/data/{}/response_files/".format(working_dir, struct_var_metric))
-        movefiles("{}/*_cov_t*.txt".format(working_dir), "{}/data/{}/covariate_files/".format(working_dir, struct_var_metric))
+        movefiles("{}/resp_*.txt".format(working_dir), "{}/data/{}/response_files/".format(working_dir, struct_var_metric))
+        movefiles("{}/cov_t*.txt".format(working_dir), "{}/data/{}/covariate_files/".format(working_dir, struct_var_metric))
 
         #  this path is where ROI_models folders are located
         data_dir = '{}/data/{}/ROI_models/'.format(working_dir, struct_var_metric)
 
         # Create Design Matrix and add in spline basis and intercept for validation and training data
         create_design_matrix('train', agemin, agemax, spline_order, spline_knots, roi_ids, data_dir)
-        create_design_matrix('train', agemin, agemax, spline_order, spline_knots, roi_ids, data_dir)
+        # create_design_matrix('train', agemin, agemax, spline_order, spline_knots, roi_ids, data_dir)
 
         # create dataframe with subject numbers to put the Z scores in.
         subjects_train = subjects_train.reshape(-1, 1)
