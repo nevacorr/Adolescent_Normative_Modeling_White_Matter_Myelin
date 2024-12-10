@@ -59,16 +59,19 @@ if run_make_norm_model:
     Z_time2_mpf.reset_index(inplace=True)
 
     plot_and_compute_zcores_by_gender(Z_time2_fa, 'fa', roi_ids, working_dir, n_splits)
+    Z_time2_fa.to_csv(f'{working_dir}/Z_time2_fa_{n_splits}_splits.csv')
 
     roi_ids_md = roi_ids.copy()
     roi_ids_md = [s.replace('FA', 'MD') for s in roi_ids_md]
     plot_and_compute_zcores_by_gender(Z_time2_md, 'md', roi_ids_md, working_dir, n_splits)
+    Z_time2_md.to_csv(f'{working_dir}/Z_time2_md_{n_splits}_splits.csv')
 
     roi_ids_mpf = roi_ids.copy()
     roi_ids_mpf.remove('Left Uncinate FA')
     roi_ids_mpf.remove('Right Uncinate FA')
     roi_ids_mpf = [s.replace('FA', 'MPF') for s in roi_ids_mpf]
     plot_and_compute_zcores_by_gender(Z_time2_mpf, 'mpf', roi_ids_mpf, working_dir, n_splits)
+    Z_time2_mpf.to_csv(f'{working_dir}/Z_time2_mpf_{n_splits}_splits.csv')
 
     plt.show()
 
