@@ -64,6 +64,4 @@ def load_genz_tract_profile_data(struct_var, visit, data_dir, datafilename):
             cols = [col for col in data.columns if col.startswith(region.rstrip(' FA'))]
         avgdf[region] = data[cols].mean(axis=1)
 
-    # clean_df = avgdf.dropna()
-
     return avgdf
