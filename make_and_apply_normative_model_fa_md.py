@@ -77,17 +77,15 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
     # remove subjects to exclude v2 from sub_v2_only
     sub_v2_only = [val for val in sub_v2_only if val not in subjects_to_exclude_v2]
     # remove subjects to exclude from list of all subjects
-    all_subjects = [val for val in all_subjects if (val not in subjects_to_exclude_v1) and (val not in subjects_to_exclude_v2)]
-    num_subjects_for_ttsplit = len(all_subjects) - len(sub_v1_only) - len(sub_v2_only)
+    all_subjects = fa_all_data_v1['participant_id'].tolist().extend(fa_all_data_v2['participant_id'].tolist())
+    all_subjects_2ts = [sub for sub in all_subjects if (sub not in sub_v1_only and sub not in sub_v2_only)]
 
-    subjects_only_one_visit = sub_v1_only + sub_v2_only
+    subjs_train = sub_v1_only.copy()
+    subjs_test = sub_v2_only.copy()
 
-    # remove excluded subjects from all_subjects_both_visits_dataframe
-    fa_all_data_both_visits = fa_all_data_both_visits[~fa_all_data_both_visits['participant_id'].isin(subjects_to_exclude_v1)]
-    fa_all_data_both_visits = fa_all_data_both_visits[~fa_all_data_both_visits['participant_id'].isin(subjects_to_exclude_v2)]
+    num_subjs_random_add_train = (len(all_subjects)/2) - len(sub_v1_only)
+    num_subjs_random_add_test = (len(all_subjects)/2) - len(sub_v2_only)
 
-    # remove subjects with only data from one visit from alL_subjects_both_visits dataframe
-    fa_all_data_both_visits = fa_all_data_both_visits[~fa_all_data_both_visits['participant_id'].isin(subjects_only_one_visit)]
 
     # Create a new column in dataframe that combines age and gender for stratification
     fa_all_data_both_visits['age_sex'] = fa_all_data_both_visits['age'].astype(str) + '_' + fa_all_data_both_visits['sex'].astype(str)
@@ -99,7 +97,7 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
     fa_all_data_all_visits = fa_all_data_both_visits[fa_all_data_both_visits['visit']==1]
 
     # Initialize StratifiedShuffleSplit for equal train/test sizes
-    splitter = StratifiedShuffleSplit(n_splits=n_splits, test_size=0.64, random_state=1)
+    splitter = StratifiedShuffleSplit(n_splits=n_splits, test_size=0.64, random_state=42)
 
     train_set_list = []
     test_set_list = []
