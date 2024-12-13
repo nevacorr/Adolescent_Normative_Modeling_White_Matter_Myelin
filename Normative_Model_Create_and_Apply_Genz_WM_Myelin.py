@@ -15,7 +15,7 @@ from apply_normative_model_time2 import apply_normative_model_time2
 from plot_and_compute_zdistributions import plot_and_compute_zcores_by_gender
 
 struct_var = 'fa'
-n_splits = 1   #Number of train/test splits
+n_splits = 100   #Number of train/test splits
 show_plots = 0          #set to 1 to show training and test data ymvs yhat and spline fit plots.
 show_nsubject_plots = 0 #set to 1 to plot number of subjects used in analysis, for each age and gender
 spline_order = 1        # order of spline to use for model

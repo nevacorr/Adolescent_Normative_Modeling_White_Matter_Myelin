@@ -22,7 +22,7 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
         load_genz_data_wm_fa_md(struct_var, raw_data_dir, fa_datafilename_v1, fa_datafilename_v2, md_datafilename_v1,
         md_datafilename_v2, demographics_filename))
 
-    mpf_all_data_both_visits, all_subjects_mpf, sub_v1_only, sub_v2_only = (
+    mpf_all_data_both_visits, all_subjects_mpf, sub_v1_only_mpf, sub_v2_only_mpf = (
         load_genz_data_wm_mpf_v1('mpf', raw_data_dir, mpf_datafilename_v1, mpf_datafilename_v2,
                                              demographics_filename ))
 
@@ -68,8 +68,8 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
 
     # show bar plots with number of subjects per age group in pre-COVID data
     if show_nsubject_plots:
-        plot_num_subjs(fa_all_data_v1, 'Subjects by Age with Pre-COVID Data\n'
-                                 '(Total N=' + str(fa_all_data_v1.shape[0]) + ')', struct_var, 'pre-covid_allsubj',
+        plot_num_subjs(fa_all_data_v1, 'Subjects by Age with Pre-COVID FA Data\n'
+                                 '(Total N=' + str(fa_all_data_v1.shape[0]) + ')', 'fa', 'pre-covid_allsubj',
                                   working_dir)
 
     # remove subjects to exclude v1 from sub_v1_only
@@ -77,35 +77,37 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
     # remove subjects to exclude v2 from sub_v2_only
     sub_v2_only = [val for val in sub_v2_only if val not in subjects_to_exclude_v2]
     # remove subjects to exclude from list of all subjects
-    all_subjects = fa_all_data_v1['participant_id'].tolist().extend(fa_all_data_v2['participant_id'].tolist())
+    all_subjects = fa_all_data_v1['participant_id'].tolist()
+    all_subjects.extend(fa_all_data_v2['participant_id'].tolist())
+    all_subjects = pd.unique(all_subjects).tolist()
+    all_subjects.sort()
     all_subjects_2ts = [sub for sub in all_subjects if (sub not in sub_v1_only and sub not in sub_v2_only)]
-
-    subjs_train = sub_v1_only.copy()
-    subjs_test = sub_v2_only.copy()
 
     num_subjs_random_add_train = (len(all_subjects)/2) - len(sub_v1_only)
     num_subjs_random_add_test = (len(all_subjects)/2) - len(sub_v2_only)
 
+    fa_df_for_train_test_split = fa_all_data_v1.copy()
 
     # Create a new column in dataframe that combines age and gender for stratification
-    fa_all_data_both_visits['age_sex'] = fa_all_data_both_visits['age'].astype(str) + '_' + fa_all_data_both_visits['sex'].astype(str)
+    fa_df_for_train_test_split['age_sex'] = fa_df_for_train_test_split['age'].astype(str) + '_' + fa_df_for_train_test_split['sex'].astype(str)
 
     # Create a dataframe that has only visit 1 data and only subject number, visit, age and sex as columns
     cols_to_keep = ['participant_id', 'visit', 'age', 'sex', 'age_sex']
-    cols_to_drop = [col for col in fa_all_data_both_visits if col not in cols_to_keep]
-    fa_all_data_both_visits.drop(columns=cols_to_drop, inplace=True)
-    fa_all_data_all_visits = fa_all_data_both_visits[fa_all_data_both_visits['visit']==1]
+    cols_to_drop = [col for col in fa_df_for_train_test_split if col not in cols_to_keep]
+    fa_df_for_train_test_split.drop(columns=cols_to_drop, inplace=True)
+    # keep only the subjects that have data at both time points
+    fa_df_for_train_test_split=fa_df_for_train_test_split[fa_df_for_train_test_split['participant_id'].isin(all_subjects_2ts)]
 
     # Initialize StratifiedShuffleSplit for equal train/test sizes
-    splitter = StratifiedShuffleSplit(n_splits=n_splits, test_size=0.64, random_state=42)
+    splitter = StratifiedShuffleSplit(n_splits=n_splits, test_size=0.52, random_state=42)
 
     train_set_list = []
     test_set_list = []
     # Perform the splits
-    for i, (train_index, test_index) in enumerate(splitter.split(fa_all_data_all_visits, fa_all_data_all_visits['age_sex'])):
-        train_set_list_tmp = fa_all_data_all_visits.iloc[train_index, 0].values.tolist()
+    for i, (train_index, test_index) in enumerate(splitter.split(fa_df_for_train_test_split, fa_df_for_train_test_split['age_sex'])):
+        train_set_list_tmp = fa_df_for_train_test_split.iloc[train_index, 0].values.tolist()
         train_set_list_tmp.extend(sub_v1_only)
-        test_set_list_tmp = fa_all_data_all_visits.iloc[test_index, 0].values.tolist()
+        test_set_list_tmp = fa_df_for_train_test_split.iloc[test_index, 0].values.tolist()
         test_set_list_tmp.extend(sub_v2_only)
         train_set_list.append(train_set_list_tmp)
         test_set_list.append(test_set_list_tmp)
