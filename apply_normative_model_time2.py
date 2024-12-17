@@ -89,9 +89,6 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
     movefiles("{}/cov_t*.txt".format(working_dir), "{}/predict_files/{}/covariate_files/"
               .format(working_dir, struct_var))
 
-    # # Create Design Matrix and add in spline basis and intercept
-    # create_design_matrix_one_gender('test', agemin, agemax, spline_order, spline_knots, roi_ids, out_dir)
-
     # Create dataframe to store Zscores
     Z_time2 = pd.DataFrame()
     Z_time2['participant_id'] = all_data_v2['participant_id'].copy()
