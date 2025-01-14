@@ -35,47 +35,48 @@ cogdat_v1.drop(columns=remove_cols, inplace=True)
 behav_zs = pd.read_csv('/home/toddr/neva/PycharmProjects/AdolNormativeModelingCOVID/'
                        'Z_scores_all_meltzoff_cogn_behav_visit2.csv', usecols=lambda column: column != 'Unnamed: 0')
 
-fa_visit1_datafile = 'genz_tract_profile_data/genzFA_tractProfiles_visit1.csv'
-fa_visit2_datafile = 'genz_tract_profile_data/genzFA_tractProfiles_visit2.csv'
-md_visit1_datafile = 'genz_tract_profile_data/genzMD_tractProfiles_visit1.csv'
-md_visit2_datafile = 'genz_tract_profile_data/genzMD_tractProfiles_visit2.csv'
+for visit in [1, 2]:
 
-data_fa_v2 = load_genz_tract_profile_data_noavg(2, data_dir, fa_visit2_datafile)
-data_md_v2 = load_genz_tract_profile_data_noavg(2, data_dir, md_visit2_datafile)
+    fa_datafile = f'genz_tract_profile_data/genzFA_tractProfiles_visit{visit}.csv'
+    md_datafile = f'genz_tract_profile_data/genzMD_tractProfiles_visit{visit}.csv'
 
-fa_all_data_v2 = cogdat_v2.merge(data_fa_v2, on='Subject')
-fa_all_data_v2.drop(columns=['Subject', 'Age', 'AgeGrp', 'visit', 'Age', 'Visit'], inplace=True)
-md_all_data_v2 = cogdat_v2.merge(data_md_v2, on='Subject')
-md_all_data_v2.drop(columns=['Subject', 'Age', 'AgeGrp', 'visit', 'Age', 'Visit'], inplace=True)
+    data_fa = load_genz_tract_profile_data_noavg(visit, data_dir, fa_datafile)
+    data_md = load_genz_tract_profile_data_noavg(visit, data_dir, md_datafile)
 
-fa_v2_all_col_corr = fa_all_data_v2.corr()
-fa_v2_all_col_corr.drop(index=['FlankerSU', 'DCSU', 'VocabSU', 'WMemorySU'], inplace=True)
+    fa_all_data= cogdat_v2.merge(data_fa, on='Subject')
+    fa_all_data.drop(columns=['Subject', 'Age', 'AgeGrp', 'visit', 'Age', 'Visit'], inplace=True)
+    md_all_data = cogdat_v2.merge(data_md, on='Subject')
+    md_all_data.drop(columns=['Subject', 'Age', 'AgeGrp', 'visit', 'Age', 'Visit'], inplace=True)
 
-md_v2_all_col_corr = md_all_data_v2.corr()
-md_v2_all_col_corr.drop(index=['FlankerSU', 'DCSU', 'VocabSU', 'WMemorySU'], inplace=True)
+    fa_all_col_corr = fa_all_data.corr()
+    fa_all_col_corr.drop(index=['FlankerSU', 'DCSU', 'VocabSU', 'WMemorySU'], inplace=True)
 
-fa_finalcorr_df = pd.DataFrame()
-md_finaLcorr_df = pd.DataFrame()
+    md_all_col_corr = md_all_data.corr()
+    md_all_col_corr.drop(index=['FlankerSU', 'DCSU', 'VocabSU', 'WMemorySU'], inplace=True)
 
-columns_to_copy = ['FlankerSU', 'DCSU', 'VocabSU', 'WMemorySU']
-fa_finalcorr_df[columns_to_copy] = fa_v2_all_col_corr[columns_to_copy]
-md_finaLcorr_df[columns_to_copy] = md_v2_all_col_corr[columns_to_copy]
+    fa_finalcorr_df = pd.DataFrame()
+    md_finaLcorr_df = pd.DataFrame()
 
-thresh = 0.30
+    columns_to_copy = ['FlankerSU', 'DCSU', 'VocabSU', 'WMemorySU']
+    columns_to_copy = ['FlankerSU', 'DCSU', 'VocabSU', 'WMemorySU']
+    fa_finalcorr_df[columns_to_copy] = fa_all_col_corr[columns_to_copy]
+    md_finaLcorr_df[columns_to_copy] = md_all_col_corr[columns_to_copy]
 
-fa_finalcorr_df_thresh = fa_finalcorr_df[(fa_finalcorr_df.abs() > thresh).any(axis=1)]
-md_finalcorr_df_thresh = md_finaLcorr_df[(md_finaLcorr_df.abs() > thresh).any(axis=1)]
+    thresh = 0.30
 
-fa_finalcorr_df_thresh[fa_finalcorr_df_thresh.abs() <= thresh]  = 0
-md_finalcorr_df_thresh[md_finalcorr_df_thresh.abs() <= thresh]  = 0
+    fa_finalcorr_df_thresh = fa_finalcorr_df[(fa_finalcorr_df.abs() > thresh).any(axis=1)]
+    md_finalcorr_df_thresh = md_finaLcorr_df[(md_finaLcorr_df.abs() > thresh).any(axis=1)]
 
-sns.heatmap(fa_finalcorr_df_thresh, cmap='bwr', vmin=-0.5, vmax=0.5)
-plt.title(f'Time 2 All Subjects FA abs(corr) > {thresh}')
-plt.show(block=False)
+    fa_finalcorr_df_thresh[fa_finalcorr_df_thresh.abs() <= thresh]  = 0
+    md_finalcorr_df_thresh[md_finalcorr_df_thresh.abs() <= thresh]  = 0
 
-plt.figure()
-sns.heatmap(md_finalcorr_df_thresh, cmap='bwr', vmin=-0.5, vmax=0.5)
-plt.title(f'Time 2 All Subjects MD abs(corr) > {thresh}')
-plt.show()
+    sns.heatmap(fa_finalcorr_df_thresh, cmap='bwr', vmin=-0.5, vmax=0.5)
+    plt.title(f'Time {visit} All Subjects FA abs(corr) > {thresh}')
+    plt.show(block=False)
+
+    plt.figure()
+    sns.heatmap(md_finalcorr_df_thresh, cmap='bwr', vmin=-0.5, vmax=0.5)
+    plt.title(f'Time {visit} All Subjects MD abs(corr) > {thresh}')
+    plt.show()
 
 mystop=1
