@@ -19,8 +19,8 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
         subjects_train = train_set_array[split, :]
         subjects_test = test_set_array[split, :]
 
-        all_data_v1 = all_data_v1_orig[all_data_v1_orig['participant_id'].isin(subjects_train)]
-        all_data_v2 = all_data_v2_orig[all_data_v2_orig['participant_id'].isin(subjects_test)]
+        all_data_v1 = all_data_v1_orig[all_data_v1_orig['participant_id'].isin(subjects_train)].copy()
+        all_data_v2 = all_data_v2_orig[all_data_v2_orig['participant_id'].isin(subjects_test)].copy()
         all_data_v1.reset_index(drop=True, inplace=True)
         all_data_v2.reset_index(drop=True, inplace=True)
 

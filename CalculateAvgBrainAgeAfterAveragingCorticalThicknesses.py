@@ -1,134 +1,78 @@
 #####
-# This program calculates brain age acceleration based on the adolescent data. It averages cortical thickness across
-# all brain regions. It fits a model on the precovid data and evaluates the model on the post-covid data. It
-# includes an option to use bootstrapping for confidence interval calculation.
+# This program implements the bayesian linear regression normative modeling outlined by Rutherford et al.
+# NatureProtocols 2022 (https://doi.org/10.1038/s41596-022-00696-5). Here the modeling is applied to
+# adolescent DTI and MPF data collected at two time points (before and after the COVID lockdowns).
+# This program creates models of FA and MD change in white matter tractsbetween 9 and 17 years of age for our pre-COVID data and
+# stores these models to be applied in another script (Apply_Normative_Model_to_Genz_Time2.py).
 # Author: Neva M. Corrigan
-# Date: 21 February, 2024
 ######
 
 import os
-import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
-from Utility_Functions import plot_age_acceleration
-from scipy.stats import percentileofscore
-from Load_Genz_Data import load_genz_data
-from plot_num_subjs import plot_num_subjs
-from calculate_avg_brain_age_acc import calculate_avg_brain_age_acceleration_make_model
-from calculate_avg_brain_age_acc import calculate_avg_brain_age_acceleration_apply_model
-from calculate_avg_brain_age_acceleration_apply_model_bootstrap import calculate_avg_brain_age_acceleration_apply_model_bootstrap
+from plot_and_compute_zdistributions import plot_and_compute_zcores_by_gender
+from make_and_apply_normataive_model_avgbrain import make_and_apply_normative_model_avgbrain
+from compute_df_correlations import compute_df_correlations
 
-struct_var = 'cortthick'
-show_plots = 0  #set to 1 to show training and test data y vs yhat and spline fit plots. Set to 0 to save to file.
-show_nsubject_plots = 0 #set to 1 to show number of subjects at each age and sex in analysis
-spline_order = 1
-spline_knots = 2
-perform_train_test_split_precovid = 1  # flag indicating whether training set was split into train and validation set
-filepath = os.getcwd()
-subjects_to_exclude = [525]  # subjects to exclude from analysis. Subject 525 had an incidental finding
-calc_CI_age_acc_bootstrap = 0  # specify whether to run bootstrap analysis for CI calculation
-nbootstrap = 1000  #specify number of bootstraps
+struct_var = 'avgwm'
+n_splits = 1   #Number of train/test splits
+show_plots = 0          #set to 1 to show training and test data ymvs yhat and spline fit plots.
+show_nsubject_plots = 0 #set to 1 to plot number of subjects used in analysis, for each age and gender
+spline_order = 1        # order of spline to use for model
+spline_knots = 2        # number of knots in spline to use in model
+perform_train_test_split_precovid = 0 #flag indicating whether to split the training set (pre-COVID data) into train and validation data
+data_dir = '/home/toddr/neva/PycharmProjects/data_dir'
 
-# Turn off interactive mode, don't show plots unless plt.show() is specified
-plt.ioff()
+fa_visit1_datafile = 'genz_tract_profile_data/genzFA_tractProfiles_visit1.csv'
+fa_visit2_datafile = 'genz_tract_profile_data/genzFA_tractProfiles_visit2.csv'
+md_visit1_datafile = 'genz_tract_profile_data/genzMD_tractProfiles_visit1.csv'
+md_visit2_datafile = 'genz_tract_profile_data/genzMD_tractProfiles_visit2.csv'
+mpf_visit1_datafile = 'tableGenzVisit1_allTracts_Oct22.csv'
+mpf_visit2_datafile = 'tableGenzVisit2_allTracts_Oct22.csv'
+subjects_to_exclude_time1 = []  # subjects to exclude for FA and MD
+subjects_to_exclude_time2 = []  # subjects to exclude for FA and MD
+mpf_subjects_to_exclude_time1 = []#[106, 107, 111, 121, 122, 126, 127, 208, 209, 210, 211, 214, 215, 221, 226, 309, 323, 335,405, 418, 421, 423, 524]
+mpf_subjects_to_exclude_time2 = [] #[105, 117, 119, 201, 209, 215, 301, 306, 319, 321, 325, 406, 418, 421, 515, 527]
 
-# Load visit 1 data
-visit=1
-brain_good, all_data, roi_ids = load_genz_data(struct_var, visit, filepath)
+file_with_demographics = 'Adol_CortThick_data.csv'
 
-# Remove subject 525 who has an incidental finding
-all_data = all_data[~all_data['participant_id'].isin(subjects_to_exclude)]
+run_make_norm_model = 1
 
-# Read in file of subjects in post-COVID test set
-fname='{}/visit2_all_subjects_used_in_test_set_cortthick.txt'.format(filepath, struct_var)
-subjects_test = pd.read_csv(fname, header=None)
+working_dir = os.getcwd()
 
-# Exclude subjects at 9, 11 and 13 who are in test set from dataframe of visit 1 data
-all_data = all_data[~all_data['participant_id'].isin(subjects_test[0])]
+if run_make_norm_model:
 
-# Replace gender with gender=0 female gender =1 male
-all_data.loc[all_data['sex']==2, 'sex'] = 0
+    roi_ids, Z_time2_fa, Z_time2_md, Z_time2_mpf = make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
+                           data_dir, working_dir, fa_visit1_datafile, fa_visit2_datafile, md_visit1_datafile, md_visit2_datafile, mpf_visit1_datafile,
+                           mpf_visit2_datafile, subjects_to_exclude_time1, subjects_to_exclude_time2, mpf_subjects_to_exclude_time1,
+                           mpf_subjects_to_exclude_time2, file_with_demographics, n_splits)
 
-# Plot number of subjects of each gender by age who are included in training data set
-if show_nsubject_plots:
-    plot_num_subjs(all_data, 'Subjects by Age with Pre-COVID Data\nUsed to Create Model\n'
-                   '(Total N=' + str(all_data.shape[0]) + ')', struct_var, 'pre-covid_norm_model', filepath)
+    compute_df_correlations(Z_time2_fa, Z_time2_md)
 
-# Drop amy rows with any missing values
-all_data = all_data.dropna()
-all_data.reset_index(inplace=True, drop=True)
+    plt.show(block=False)
 
-# If validation data was not used in model creation, exclude these subjects from dataframe
-if perform_train_test_split_precovid == 1:
-    fname_train = f'{filepath}/train_subjects_excludes_validation.csv'
-    subjects_train = pd.read_csv(fname_train, header=None)
-    subjects_train = subjects_train[0].tolist()
-    all_data = all_data[all_data['participant_id'].isin(subjects_train)]
+    tmp = Z_time2_fa.groupby(by=['participant_id'])
+    Z_time2_fa = Z_time2_fa.groupby(by=['participant_id']).mean().drop(columns=['split'])
+    Z_time2_md = Z_time2_md.groupby(by=['participant_id']).mean().drop(columns=['split'])
+    Z_time2_mpf = Z_time2_mpf.groupby(by=['participant_id']).mean().drop(columns=['split'])
+    Z_time2_fa.reset_index(inplace=True)
+    Z_time2_md.reset_index(inplace=True)
+    Z_time2_mpf.reset_index(inplace=True)
 
-# Separate the brain features (response variables) and predictors (age, gender) in to separate dataframes
-all_data_features_orig = all_data.loc[:,roi_ids]
-all_data_covariates = all_data[['age', 'agedays', 'sex']]
+    plot_and_compute_zcores_by_gender(Z_time2_fa, 'fa', roi_ids, working_dir, n_splits)
+    Z_time2_fa.to_csv(f'{working_dir}/Z_time2_fa_{n_splits}_splits.csv')
 
-# Average cortical thickness across all regions for each subject
-all_data_features = all_data_features_orig.mean(axis=1).to_frame()
-all_data_features.rename(columns={0:'avgcortthick'},  inplace=True)
+    roi_ids_md = roi_ids.copy()
+    roi_ids_md = [s.replace('FA', 'MD') for s in roi_ids_md]
+    plot_and_compute_zcores_by_gender(Z_time2_md, 'md', roi_ids_md, working_dir, n_splits)
+    Z_time2_md.to_csv(f'{working_dir}/Z_time2_md_{n_splits}_splits.csv')
 
-# Create model for when cortthick is averaged across the entire brain
-model_dir, agemin, agemax = calculate_avg_brain_age_acceleration_make_model('allreg',
-                        all_data, all_data_covariates, all_data_features, struct_var, show_plots,
-                        spline_order, spline_knots, filepath)
+    roi_ids_mpf = roi_ids.copy()
+    roi_ids_mpf.remove('Left Uncinate FA')
+    roi_ids_mpf.remove('Right Uncinate FA')
+    roi_ids_mpf = [s.replace('FA', 'MPF') for s in roi_ids_mpf]
+    plot_and_compute_zcores_by_gender(Z_time2_mpf, 'mpf', roi_ids_mpf, working_dir, n_splits)
+    Z_time2_mpf.to_csv(f'{working_dir}/Z_time2_mpf_{n_splits}_splits.csv')
 
-# Specify visit number
-visit = 2
-# Load all brain and behavior data for visit 2
-brain_good, all_datav2, roi_ids = load_genz_data(struct_var, visit, filepath)
+    plt.show()
 
-# Load test subject numbeers
-fname = '{}/visit2_all_subjects_used_in_test_set_{}.txt'.format(filepath, struct_var)
-my_file = open(fname, 'r')
-test_subjects_txt = my_file.read()
-test_subjects = test_subjects_txt.split("\n")
-my_file.close()
-while ("" in test_subjects):
-    test_subjects.remove("")
-test_subjects = [int(i) for i in test_subjects]
-
-# Create a dataframe with just test subject data
-all_datav2 = all_datav2[all_datav2['participant_id'].isin(test_subjects)]
-
-# Recode gender as 0=female 1=male
-all_datav2.loc[all_datav2['sex'] == 2, 'sex'] = 0
-
-# Show number of subjects by gender and age
-if show_nsubject_plots:
-    plot_num_subjs(all_datav2, 'Subjects with Post-COVID Data\nEvaluated by Model\n'
-                   + ' (Total N=' + str(all_datav2.shape[0]) + ')', struct_var, 'post-covid_allsubj', filepath)
-
-# Reset indices
-all_datav2.reset_index(inplace=True, drop=True)
-
-# Calculate age acceleration
-agediff_female, agediff_male = calculate_avg_brain_age_acceleration_apply_model(roi_ids, 'allreg', all_datav2,
-                                                 struct_var, show_plots, model_dir, spline_order, spline_knots, filepath,
-                                                 agemin, agemax)
-
-# If calculate bootstrap, run analysis repeatedly for each bootstrap and calculate confidence intervals
-if calc_CI_age_acc_bootstrap:
-
-    mean_agediff_boot_f, mean_agediff_boot_m = calculate_avg_brain_age_acceleration_apply_model_bootstrap(roi_ids,
-                                                    all_datav2, struct_var, spline_order, spline_knots,
-                                                    filepath, agemin, agemax, nbootstrap)
-
-    ageacc_from_bootstraps = {}
-    ageacc_from_bootstraps['female'] = mean_agediff_boot_f
-    ageacc_from_bootstraps['male'] = mean_agediff_boot_m
-
-    # Write age acceleration from bootstrapping to file
-    with open(f"{filepath}/ageacceleration_dictionary {nbootstrap} bootstraps.txt", 'w') as f:
-        for key, value in ageacc_from_bootstraps.items():
-            f.write('%s:%s\n' % (key, value))
-
-# Show plot of age acceleration for each gender
-plot_age_acceleration(filepath, nbootstrap, agediff_female, agediff_male)
-
-plt.show()
+    mystop=1
