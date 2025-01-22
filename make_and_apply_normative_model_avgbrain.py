@@ -8,7 +8,7 @@ from pcntoolkit.normative import estimate, evaluate
 from plot_num_subjs import plot_num_subjs
 from Load_Genz_Data_WWM_FA_MD import load_genz_data_wm_fa_md, load_genz_data_wm_mpf_v1
 from apply_normative_model_time2 import apply_normative_model_time2
-from make_model import make_model
+from make_model_avgbrain import make_model_avgbrain
 from Utility_Functions import makenewdir
 
 
@@ -54,7 +54,7 @@ def make_and_apply_normative_model_avgbrain(struct_var, show_plots, show_nsubjec
         makenewdir('{}/avgbrain/{}'.format(working_dir, struct_var_metric))
         makenewdir('{}/avgbrain/{}/plots'.format(working_dir, struct_var_metric))
 
-    #make file diretories for model tssting
+    #make file directories for model testing
     dirpath = os.path.join(working_dir, 'avgbrain_predict_files')
     try:
         shutil.rmtree(dirpath)
@@ -76,15 +76,15 @@ def make_and_apply_normative_model_avgbrain(struct_var, show_plots, show_nsubjec
     sub_v1_only = [val for val in sub_v1_only if val not in subjects_to_exclude_v1]
     # remove subjects to exclude v2 from sub_v2_only
     sub_v2_only = [val for val in sub_v2_only if val not in subjects_to_exclude_v2]
-    # remove subjects to exclude from list of all subjects
+    # make lists of all subjects and all subjects that have two timepoints
     all_subjects = fa_all_data_v1['participant_id'].tolist()
     all_subjects.extend(fa_all_data_v2['participant_id'].tolist())
     all_subjects = pd.unique(all_subjects).tolist()
     all_subjects.sort()
     all_subjects_2ts = [sub for sub in all_subjects if (sub not in sub_v1_only and sub not in sub_v2_only)]
 
-    num_subjs_random_add_train = (len(all_subjects)/2) - len(sub_v1_only)
-    num_subjs_random_add_test = (len(all_subjects)/2) - len(sub_v2_only)
+    # num_subjs_random_add_train = (len(all_subjects)/2) - len(sub_v1_only)
+    # num_subjs_random_add_test = (len(all_subjects)/2) - len(sub_v2_only)
 
     fa_df_for_train_test_split = fa_all_data_v1.copy()
 
@@ -121,25 +121,39 @@ def make_and_apply_normative_model_avgbrain(struct_var, show_plots, show_nsubjec
     fname_test = '{}/visit1_subjects_test_sets_{}_splits_{}.txt'.format(working_dir, n_splits, struct_var)
     np.save(fname_test,test_set_array)
 
-    fa_all_data_v1_orig = fa_all_data_v1
-    fa_all_data_v2_orig = fa_all_data_v2
+    # fa_all_data_v1_orig = fa_all_data_v1
+    # fa_all_data_v2_orig = fa_all_data_v2
+    #
+    # md_all_data_v1_orig = md_all_data_v1
+    # md_all_data_v2_orig = md_all_data_v2
+    #
+    # mpf_all_data_v1_orig = mpf_all_data_v1
+    # mpf_all_data_v2_orig = mpf_all_data_v2
 
-    md_all_data_v1_orig = md_all_data_v1
-    md_all_data_v2_orig = md_all_data_v2
+    def mean_across_regions(df, meas):
+        df_mean = df.copy()
+        df_mean = df_mean.drop(columns=['participant_id', 'sex', 'agemonths', 'agedays', 'age'])
+        df_mean = df_mean.mean(axis=1).to_frame()
+        df_mean.rename(columns={0:meas}, inplace=True)
+        df_demographics = df.loc[:, ['participant_id', 'sex', 'agemonths', 'agedays', 'age']].copy()
+        df_final = pd.concat([df_demographics, df_mean], axis=1)
+        return df_final
 
-    mpf_all_data_v1_orig = mpf_all_data_v1
-    mpf_all_data_v2_orig = mpf_all_data_v2
+    # Average metrics across all regions for each subject
+    fa_all_data_v1_avg = mean_across_regions(fa_all_data_v1, 'fa')
+    fa_all_data_v2_avg = mean_across_regions(fa_all_data_v2, 'fa')
+    md_all_data_v1_avg = mean_across_regions(md_all_data_v1, 'md')
+    md_all_data_v2_avg = mean_across_regions(md_all_data_v2, 'md')
+    mpf_all_data_v1_avg = mean_across_regions(mpf_all_data_v1, 'mpf')
+    mpf_all_data_v2_avg = mean_across_regions(mpf_all_data_v2, 'mpf')
 
-    Z2_all_splits_fa = make_model(fa_all_data_v1_orig, fa_all_data_v2_orig, 'fa', n_splits, train_set_array, test_set_array,
-               show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids)
+    Z2_all_splits_fa = make_model_avgbrain(fa_all_data_v1_avg, fa_all_data_v2_avg, 'fa', n_splits, train_set_array, test_set_array,
+               show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots)
 
-    Z2_all_splits_md = make_model(md_all_data_v1_orig, md_all_data_v2_orig, 'md', n_splits, train_set_array, test_set_array,
-               show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids)
+    Z2_all_splits_md = make_model_avgbrain(md_all_data_v1_avg, md_all_data_v2_avg, 'md', n_splits, train_set_array, test_set_array,
+               show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots)
 
-    roi_ids_tmp = roi_ids.copy()
-    roi_ids_tmp.remove('Left Uncinate FA')
-    roi_ids_tmp.remove('Right Uncinate FA')
-    Z2_all_splits_mpf = make_model(mpf_all_data_v1_orig, mpf_all_data_v2_orig, 'mpf', n_splits, train_set_array, test_set_array,
-               show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids_tmp)
+    Z2_all_splits_mpf = make_model_avgbrain(mpf_all_data_v1_avg, mpf_all_data_v2_avg, 'mpf', n_splits, train_set_array, test_set_array,
+               show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots)
 
-    return roi_ids, Z2_all_splits_fa, Z2_all_splits_md , Z2_all_splits_mpf
+    return Z2_all_splits_fa, Z2_all_splits_md , Z2_all_splits_mpf

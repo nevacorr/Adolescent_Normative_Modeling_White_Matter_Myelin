@@ -19,7 +19,7 @@ def load_genz_tract_profile_data(struct_var, visit, data_dir, datafilename):
 
     col_names.remove('Subject')
 
-    # remove _X from all strings in list, where X is an integer
+    # make a list of tract names
     region_names = [re.sub('_[0-9]+$', '', s) for s in col_names]
     unique_region_names = list(set(region_names))
 

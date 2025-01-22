@@ -59,6 +59,38 @@ def create_design_matrix(datatype, agemin, agemax, spline_order, spline_knots, r
         elif datatype == 'test':
             np.savetxt(os.path.join(roi_dir, 'cov_bspline_te.txt'), X)
 
+def create_design_matrix_avgbrain(datatype, agemin, agemax, spline_order, spline_knots, roi_ids, data_dir):
+    B = create_bspline_basis(agemin, agemax, p=spline_order, nknots=spline_knots)
+    for roi in roi_ids:
+        print('Creating basis expansion for ROI:', roi)
+        roi_dir = data_dir
+        os.chdir(roi_dir)
+        # create output dir
+        os.makedirs(os.path.join(roi_dir, 'blr'), exist_ok=True)
+
+        # load train & test covariate data matrices
+        if datatype == 'train':
+            X = np.loadtxt(os.path.join(roi_dir, 'cov_tr.txt'))
+        elif datatype == 'test':
+            X = np.loadtxt(os.path.join(roi_dir, 'cov_te.txt'))
+
+        # add intercept column
+        X = np.concatenate((X, np.ones((X.shape[0], 1))), axis=1)
+
+        if datatype == 'train':
+            np.savetxt(os.path.join(roi_dir, 'cov_int_tr.txt'), X)
+        elif datatype == 'test':
+            np.savetxt(os.path.join(roi_dir, 'cov_int_te.txt'), X)
+
+        # create Bspline basis set
+        # This creates a numpy array called Phi by applying function B to each element of the first column of X_tr
+        Phi = np.array([B(i) for i in X[:, 0]])
+        X = np.concatenate((X, Phi), axis=1)
+        if datatype == 'train':
+            np.savetxt(os.path.join(roi_dir, 'cov_bspline_tr.txt'), X)
+        elif datatype == 'test':
+            np.savetxt(os.path.join(roi_dir, 'cov_bspline_te.txt'), X)
+
 #this function creates a dummy design matrix for plotting of spline function
 def create_dummy_design_matrix(struct_var, agemin, agemax, cov_file, spline_order, spline_knots, path):
     # load predictor variables for region
@@ -144,6 +176,61 @@ def plot_data_with_spline(datastr, struct_var, cov_file, resp_file, dummy_cov_fi
             plt.show()
     else:
         plt.savefig('{}/data/{}/plots/{}_vs_age_withsplinefit_{}_{}'
+                .format(working_dir, struct_var, struct_var, roi.replace(struct_var+'-', ''), datastr))
+        plt.close(fig)
+
+def plot_data_with_spline_avg_brain(datastr, struct_var, cov_file, resp_file, dummy_cov_file_path_female,
+                              dummy_cov_file_path_male, model_dir, roi, showplots, working_dir):
+
+    output_f = predict(dummy_cov_file_path_female, respfile=None, alg='blr', model_path=model_dir)
+
+    output_m = predict(dummy_cov_file_path_male, respfile=None, alg='blr', model_path=model_dir)
+
+    yhat_predict_dummy_m=output_m[0]
+    yhat_predict_dummy_f=output_f[0]
+
+    # load real data predictor variables for region
+    X = np.loadtxt(cov_file)
+    # load real data response variables for region
+    y = np.loadtxt(resp_file)
+
+    # create dataframes for plotting with seaborn facetgrid objects
+    dummy_cov_female = np.loadtxt(dummy_cov_file_path_female)
+    dummy_cov_male = np.loadtxt(dummy_cov_file_path_male)
+    df_origdata = pd.DataFrame(data=X[:, 0:2], columns=['Age in Days', 'gender'])
+    df_origdata[struct_var] = y.tolist()
+    df_origdata['Age in Days'] = df_origdata['Age in Days'] / 365.25
+    df_estspline = pd.DataFrame(data=dummy_cov_female[:, 0].tolist() + dummy_cov_male[:, 0].tolist(),
+                                columns=['Age in Days'])
+    df_estspline['Age in Days'] = df_estspline['Age in Days'] / 365.25
+    df_estspline['gender'] = [0] * 1000 + [1] * 1000
+    df_estspline['gender'] = df_estspline['gender'].astype('float')
+    tmp = np.array(yhat_predict_dummy_f.tolist() + yhat_predict_dummy_m.tolist(), dtype=float)
+    df_estspline[struct_var] = tmp
+    df_estspline = df_estspline.drop(index=df_estspline.iloc[999].name).reset_index(drop=True)
+    df_estspline = df_estspline.drop(index=df_estspline.iloc[1998].name)
+
+    fig=plt.figure()
+    colors = {1: 'blue', 0: 'crimson'}
+    sns.lineplot(data=df_estspline, x='Age in Days', y=struct_var, hue='gender', palette=colors, legend=False)
+    sns.scatterplot(data=df_origdata, x='Age in Days', y=struct_var, hue='gender', palette=colors)
+    plt.legend(title='')
+    ax = plt.gca()
+    fig.subplots_adjust(right=0.82)
+    handles, labels = ax.get_legend_handles_labels()
+    labels = ["female", "male"]
+    ax.legend(handles, labels, loc='upper left', bbox_to_anchor=(1, 1))
+
+    plt.title(datastr +' ' + struct_var +  ' vs. Age\n' + roi.replace(struct_var+'-', ''))
+    plt.xlabel('Age')
+    plt.ylabel(datastr + struct_var)
+    if showplots == 1:
+        if datastr == 'Training Data':
+            plt.show(block=False)
+        else:
+            plt.show()
+    else:
+        plt.savefig('{}/avgbrain/{}/plots/{}_vs_age_withsplinefit_{}_{}'
                 .format(working_dir, struct_var, struct_var, roi.replace(struct_var+'-', ''), datastr))
         plt.close(fig)
 

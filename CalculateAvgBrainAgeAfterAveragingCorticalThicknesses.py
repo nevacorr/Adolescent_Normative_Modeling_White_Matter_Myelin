@@ -10,7 +10,7 @@
 import os
 import matplotlib.pyplot as plt
 from plot_and_compute_zdistributions import plot_and_compute_zcores_by_gender
-from make_and_apply_normataive_model_avgbrain import make_and_apply_normative_model_avgbrain
+from make_and_apply_normative_model_avgbrain import make_and_apply_normative_model_avgbrain
 from compute_df_correlations import compute_df_correlations
 
 struct_var = 'avgwm'
@@ -28,10 +28,12 @@ md_visit1_datafile = 'genz_tract_profile_data/genzMD_tractProfiles_visit1.csv'
 md_visit2_datafile = 'genz_tract_profile_data/genzMD_tractProfiles_visit2.csv'
 mpf_visit1_datafile = 'tableGenzVisit1_allTracts_Oct22.csv'
 mpf_visit2_datafile = 'tableGenzVisit2_allTracts_Oct22.csv'
-subjects_to_exclude_time1 = []  # subjects to exclude for FA and MD
-subjects_to_exclude_time2 = []  # subjects to exclude for FA and MD
+subjects_to_exclude_time1 = [525]  # subjects to exclude for FA and MD
+subjects_to_exclude_time2 = [525]  # subjects to exclude for FA and MD
 mpf_subjects_to_exclude_time1 = []#[106, 107, 111, 121, 122, 126, 127, 208, 209, 210, 211, 214, 215, 221, 226, 309, 323, 335,405, 418, 421, 423, 524]
 mpf_subjects_to_exclude_time2 = [] #[105, 117, 119, 201, 209, 215, 301, 306, 319, 321, 325, 406, 418, 421, 515, 527]
+
+roi_ids = ['avgwm']
 
 file_with_demographics = 'Adol_CortThick_data.csv'
 
@@ -41,36 +43,20 @@ working_dir = os.getcwd()
 
 if run_make_norm_model:
 
-    roi_ids, Z_time2_fa, Z_time2_md, Z_time2_mpf = make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
+    Z_time2_fa, Z_time2_md, Z_time2_mpf = make_and_apply_normative_model_avgbrain(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
                            data_dir, working_dir, fa_visit1_datafile, fa_visit2_datafile, md_visit1_datafile, md_visit2_datafile, mpf_visit1_datafile,
                            mpf_visit2_datafile, subjects_to_exclude_time1, subjects_to_exclude_time2, mpf_subjects_to_exclude_time1,
                            mpf_subjects_to_exclude_time2, file_with_demographics, n_splits)
 
-    compute_df_correlations(Z_time2_fa, Z_time2_md)
-
     plt.show(block=False)
 
-    tmp = Z_time2_fa.groupby(by=['participant_id'])
-    Z_time2_fa = Z_time2_fa.groupby(by=['participant_id']).mean().drop(columns=['split'])
-    Z_time2_md = Z_time2_md.groupby(by=['participant_id']).mean().drop(columns=['split'])
-    Z_time2_mpf = Z_time2_mpf.groupby(by=['participant_id']).mean().drop(columns=['split'])
-    Z_time2_fa.reset_index(inplace=True)
-    Z_time2_md.reset_index(inplace=True)
-    Z_time2_mpf.reset_index(inplace=True)
-
-    plot_and_compute_zcores_by_gender(Z_time2_fa, 'fa', roi_ids, working_dir, n_splits)
+    plot_and_compute_zcores_by_gender(Z_time2_fa, 'fa', ['fa'], working_dir, n_splits)
     Z_time2_fa.to_csv(f'{working_dir}/Z_time2_fa_{n_splits}_splits.csv')
 
-    roi_ids_md = roi_ids.copy()
-    roi_ids_md = [s.replace('FA', 'MD') for s in roi_ids_md]
-    plot_and_compute_zcores_by_gender(Z_time2_md, 'md', roi_ids_md, working_dir, n_splits)
+    plot_and_compute_zcores_by_gender(Z_time2_md, 'md', ['md'], working_dir, n_splits)
     Z_time2_md.to_csv(f'{working_dir}/Z_time2_md_{n_splits}_splits.csv')
 
-    roi_ids_mpf = roi_ids.copy()
-    roi_ids_mpf.remove('Left Uncinate FA')
-    roi_ids_mpf.remove('Right Uncinate FA')
-    roi_ids_mpf = [s.replace('FA', 'MPF') for s in roi_ids_mpf]
-    plot_and_compute_zcores_by_gender(Z_time2_mpf, 'mpf', roi_ids_mpf, working_dir, n_splits)
+    plot_and_compute_zcores_by_gender(Z_time2_mpf, 'mpf', ['mpf'], working_dir, n_splits)
     Z_time2_mpf.to_csv(f'{working_dir}/Z_time2_mpf_{n_splits}_splits.csv')
 
     plt.show()

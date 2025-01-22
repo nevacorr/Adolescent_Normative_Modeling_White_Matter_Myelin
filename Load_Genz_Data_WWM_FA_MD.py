@@ -23,7 +23,7 @@ def load_genz_data_wm_fa_md(struct_var, path, fa_braindatafilename_v1, fa_braind
     # put data from both visits in same dataframe
     fa_brain_data = pd.concat([brain_data_v1_fa, brain_data_v2_fa])
     md_brain_data = pd.concat([brain_data_v1_md, brain_data_v2_md])
-    # brain_data['Subject'] = brain_data['Subject'].astype('int64')
+
     # get demographic data
     demo_data = pd.read_csv(f'{path}/{demographics_filename}')
     demo_to_keep = ['subject', 'visit', 'gender', 'agemonths', 'agedays', 'agegroup']
@@ -41,6 +41,7 @@ def load_genz_data_wm_fa_md(struct_var, path, fa_braindatafilename_v1, fa_braind
     md_all_data = pd.merge(demo_data, md_brain_data, how='right', on=['subject', 'visit'])
     md_all_data.sort_values(by='subject', inplace=True, ignore_index=True)
 
+    # Make lists of subjects with data only at timepoint 1, subjects with data at only timepoint 2, and all subjects in dataset
     unique_subjects = fa_all_data['subject'].value_counts()
     unique_subjects = unique_subjects[unique_subjects == 1].index
     subjects_with_one_dataset = fa_all_data[fa_all_data['subject'].isin(unique_subjects)]
@@ -49,7 +50,7 @@ def load_genz_data_wm_fa_md(struct_var, path, fa_braindatafilename_v1, fa_braind
     subjects_v1_only = subjects_visit1_data_only['subject'].tolist()
     subjects_v2_only = subjects_visit2_data_only['subject'].tolist()
 
-    # create a list of all the columns to run a normative model for
+    # create a list of all the region columns to run a normative model for
     roi_ids = [col for col in fa_all_data.columns if 'FA' in col]
 
     fa_all_data.rename(columns={'subject': 'participant_id', 'gender':'sex', 'agegroup': 'age'}, inplace=True)
@@ -64,10 +65,10 @@ def load_genz_data_wm_mpf_v1(struct_var, path, braindatafilename_v1, braindatafi
 
     visit = 1
     # load data from visit 1
-    brain_data_v1 = load_raw_data_wm_mpf(struct_var, visit, path, braindatafilename_v1)
+    brain_data_v1 = load_raw_data_wm_mpf(path, braindatafilename_v1)
     visit = 2
     # load data from visit 2
-    brain_data_v2 = load_raw_data_wm_mpf(struct_var, visit, path, braindatafilename_v2)
+    brain_data_v2 = load_raw_data_wm_mpf(path, braindatafilename_v2)
 
     # put data from both visits in same dataframe
     brain_data = pd.concat([brain_data_v1, brain_data_v2])
@@ -86,6 +87,7 @@ def load_genz_data_wm_mpf_v1(struct_var, path, braindatafilename_v1, braindatafi
     all_data = pd.merge(demo_data, brain_data, how='right', on=['subject', 'visit'])
     all_data.sort_values(by='subject', inplace=True, ignore_index=True)
 
+    # make a list of subjects with data at only timepoint 1, and another for subjects with data only at timepoint 2
     unique_subjects = all_data['subject'].value_counts()
     unique_subjects = unique_subjects[unique_subjects == 1].index
     subjects_with_one_dataset = all_data[all_data['subject'].isin(unique_subjects)]
@@ -95,10 +97,11 @@ def load_genz_data_wm_mpf_v1(struct_var, path, braindatafilename_v1, braindatafi
     subjects_v2_only = subjects_visit2_data_only['subject'].tolist()
 
     # create a list of all the columns to run a normative model for
-    roi_ids = [col for col in all_data.columns if struct_var.upper() in col]
+    # roi_ids = [col for col in all_data.columns if struct_var.upper() in col]
 
     all_data.rename(columns={'subject': 'participant_id', 'gender':'sex', 'agegroup': 'age'}, inplace=True)
 
+    # make a list of all unique subject numbers
     all_subjects = all_data['participant_id'].unique().tolist()
 
     return all_data, all_subjects, subjects_v1_only, subjects_v2_only
