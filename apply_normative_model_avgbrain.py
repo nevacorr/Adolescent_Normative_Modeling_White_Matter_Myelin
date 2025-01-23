@@ -128,7 +128,7 @@ def apply_normative_model_avgbrain(struct_var, show_plots, show_nsubject_plots, 
                                      show_plots, working_dir)
 
     mean_agediff_f, mean_agediff_m = calculate_age_acceleration(struct_var, roi_dir, yhat_te, model_dir,
-                                                dummy_cov_file_path_female, dummy_cov_file_path_male, plotgap=1)
+                                                        dummy_cov_file_path_female, dummy_cov_file_path_male, plotgap=1)
 
     mystop=1
 

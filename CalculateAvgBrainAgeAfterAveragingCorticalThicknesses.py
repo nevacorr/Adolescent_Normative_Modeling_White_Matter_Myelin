@@ -14,8 +14,8 @@ from make_and_apply_normative_model_avgbrain import make_and_apply_normative_mod
 from compute_df_correlations import compute_df_correlations
 
 struct_var = 'avgwm'
-n_splits = 100   #Number of train/test splits
-show_plots = 0          #set to 1 to show training and test data ymvs yhat and spline fit plots.
+n_splits = 1   #Number of train/test splits
+show_plots = 1          #set to 1 to show training and test data ymvs yhat and spline fit plots.
 show_nsubject_plots = 0 #set to 1 to plot number of subjects used in analysis, for each age and gender
 spline_order = 1        # order of spline to use for model
 spline_knots = 2        # number of knots in spline to use in model
