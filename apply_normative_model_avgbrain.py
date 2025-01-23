@@ -9,6 +9,7 @@ from Utility_Functions import makenewdir, movefiles, create_dummy_design_matrix
 from Utility_Functions import plot_data_with_spline_avg_brain, create_design_matrix_avgbrain, read_ages_from_file
 import shutil
 from normative_edited import predict
+from calculate_brain_age_acceleration import calculate_age_acceleration
 
 def apply_normative_model_avgbrain(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
                                 working_dir, all_data_v2, roi_ids):
@@ -117,16 +118,19 @@ def apply_normative_model_avgbrain(struct_var, show_plots, show_nsubject_plots, 
                 Z_time2.loc[subj, struct_var] = Z[ind]
                 ind += 1
 
-        #create dummy design matrices
-        dummy_cov_file_path_female, dummy_cov_file_path_male= \
-            create_dummy_design_matrix(struct_var, agemin, agemax, cov_file_te, spline_order, spline_knots,
-                                                  working_dir)
+    #create dummy design matrices
+    dummy_cov_file_path_female, dummy_cov_file_path_male= \
+        create_dummy_design_matrix(struct_var, agemin, agemax, cov_file_te, spline_order, spline_knots,
+                                              working_dir)
 
-        plot_data_with_spline_avg_brain('Postcovid (Test) Data ', struct_var, cov_file_te, resp_file_te,
-                                         dummy_cov_file_path_female, dummy_cov_file_path_male, model_dir, struct_var,
-                                        show_plots, working_dir)
+    plot_data_with_spline_avg_brain('Postcovid (Test) Data ', struct_var, cov_file_te, resp_file_te,
+                                     dummy_cov_file_path_female, dummy_cov_file_path_male, model_dir, struct_var,
+                                     show_plots, working_dir)
 
-        mystop=1
+    mean_agediff_f, mean_agediff_m = calculate_age_acceleration(struct_var, roi_dir, yhat_te, model_dir,
+                                                dummy_cov_file_path_female, dummy_cov_file_path_male, plotgap=1)
+
+    mystop=1
 
     Z_time2.to_csv('{}/avgbrain_predict_files/{}/Z_scores_by_region_postcovid_testset_Final.txt'
                                 .format(working_dir, struct_var), index=False)
