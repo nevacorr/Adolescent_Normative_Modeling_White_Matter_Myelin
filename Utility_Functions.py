@@ -382,3 +382,28 @@ def plot_age_acceleration(working_dir, nbootstrap, mean_agediff_f, mean_agediff_
     plt.axhline(y=0, color='gray', linestyle='--')
     plt.savefig(f'{working_dir}/Age Acceleration by Sex with CI.pdf', dpi=300, format='pdf')
     plt.show()
+
+def make_nm_directories(working_dir, dirdata, dirpredict_files):
+    # make directories to store files for model creation
+    dirpath = os.path.join(working_dir, dirdata)
+    try:
+        shutil.rmtree(dirpath)
+        print(f"Directory '{dirpath}' and its contents have been removed.")
+    except FileNotFoundError:
+        print(f"Directory '{dirpath}' does not exist.")
+    makenewdir('{}/dirdata/'.format(working_dir))
+    for struct_var_metric in ['fa', 'md', 'mpf']:
+        makenewdir('{}/dirdata/{}'.format(working_dir, struct_var_metric))
+        makenewdir('{}/dirdata/{}/plots'.format(working_dir, struct_var_metric))
+
+    # make file directories for model testing
+    dirpath = os.path.join(working_dir, dirpredict_files)
+    try:
+        shutil.rmtree(dirpath)
+        print(f"Directory '{dirpath}' and its contents have been removed.")
+    except FileNotFoundError:
+        print(f"Directory '{dirpath}' does not exist.")
+    makenewdir('{}/dirpredict_files/'.format(working_dir))
+    for struct_var_metric in ['fa', 'md', 'mpf']:
+        makenewdir('{}/dirpredict_files/{}'.format(working_dir, struct_var_metric))
+        makenewdir('{}/dirpredict_files/{}/plots'.format(working_dir, struct_var_metric))
