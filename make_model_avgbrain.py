@@ -7,7 +7,7 @@ from Utility_Functions import create_design_matrix_avgbrain, plot_data_with_spli
 from Utility_Functions import create_dummy_design_matrix
 from Utility_Functions import barplot_performance_values, plot_y_v_yhat, makenewdir, movefiles
 from Utility_Functions import write_ages_to_file
-from apply_normative_model_time2 import apply_normative_model_time2
+from apply_normative_model_avgbrain import apply_normative_model_avgbrain
 
 def make_model_avgbrain(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, train_set_array, test_set_array,
                show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots):
@@ -137,7 +137,7 @@ def make_model_avgbrain(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n
         plot_data_with_spline_avg_brain('Training Data', struct_var_metric, cov_file_tr, resp_file_tr, dummy_cov_file_path_female,
                               dummy_cov_file_path_male, model_dir, struct_var_metric, show_plots, working_dir)
 
-        Z_time2 = apply_normative_model_time2(struct_var_metric, show_plots, show_nsubject_plots, spline_order, spline_knots,
+        Z_time2 = apply_normative_model_avgbrain(struct_var_metric, show_plots, show_nsubject_plots, spline_order, spline_knots,
                                     working_dir, all_data_v2, roi_ids)
 
         Z_time2['split'] = split
