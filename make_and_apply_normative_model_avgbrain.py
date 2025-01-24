@@ -70,7 +70,7 @@ def make_and_apply_normative_model_avgbrain(struct_var, show_plots, show_nsubjec
     if show_nsubject_plots:
         plot_num_subjs(fa_all_data_v1, 'Subjects by Age with Pre-COVID FA Data\n'
                                  '(Total N=' + str(fa_all_data_v1.shape[0]) + ')', 'fa', 'pre-covid_allsubj',
-                                  working_dir)
+                                  working_dir, 'avgbrain')
 
     # remove subjects to exclude v1 from sub_v1_only
     sub_v1_only = [val for val in sub_v1_only if val not in subjects_to_exclude_v1]

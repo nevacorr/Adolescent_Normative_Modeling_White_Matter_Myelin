@@ -30,7 +30,7 @@ def apply_normative_model_avgbrain(struct_var, show_plots, show_nsubject_plots, 
     #show number of subjects by gender and age
     if show_nsubject_plots:
         plot_num_subjs(all_data_v2, 'Subjects with Post-COVID Data\nEvaluated by Model\n'
-                       +' (Total N=' + str(all_data_v2.shape[0]) + ')', struct_var, 'post-covid_allsubj', working_dir)
+                       +' (Total N=' + str(all_data_v2.shape[0]) + ')', struct_var, 'post-covid_allsubj', working_dir, 'avgbrain')
 
     #specify which columns of dataframe to use as covariates
     X_test = all_data_v2[['agedays', 'sex']]

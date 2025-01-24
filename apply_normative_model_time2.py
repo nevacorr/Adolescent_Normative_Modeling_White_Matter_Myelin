@@ -29,7 +29,7 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
     #show number of subjects by gender and age
     if show_nsubject_plots:
         plot_num_subjs(all_data_v2, 'Subjects with Post-COVID Data\nEvaluated by Model\n'
-                       +' (Total N=' + str(all_data_v2.shape[0]) + ')', struct_var, 'post-covid_allsubj', working_dir)
+                       +' (Total N=' + str(all_data_v2.shape[0]) + ')', struct_var, 'post-covid_allsubj', working_dir, dirdata)
 
     #specify which columns of dataframe to use as covariates
     X_test = all_data_v2[['agedays', 'sex']]
@@ -38,7 +38,7 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
     y_test = all_data_v2.loc[:, roi_ids]
 
     #specify paths
-    training_dir = '{}/data/{}/ROI_models/'.format(working_dir, struct_var)
+    training_dir = '{}/{}/{}/ROI_models/'.format(working_dir, dirdata, struct_var)
     out_dir = '{}/{}/{}/ROI_models/'.format(working_dir, dirpredict, struct_var)
     #  this path is where ROI_models folders are located
     predict_files_dir = '{}/{}/{}/ROI_models/'.format(working_dir, dirpredict, struct_var)

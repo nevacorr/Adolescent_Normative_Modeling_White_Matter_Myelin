@@ -29,7 +29,7 @@ def make_model_avgbrain(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n
             plot_num_subjs(all_data_v1,
                            'Split ' + str(split) + ' Subjects by Age with Pre-COVID Data used to Train Model\n'
                                                    '(Total N=' + str(all_data_v1.shape[0]) + ')', struct_var_metric,
-                           'pre-covid_train', working_dir)
+                           'pre-covid_train', working_dir, 'avgbrain')
 
         makenewdir('{}/avgbrain/{}/ROI_models'.format(working_dir, struct_var_metric))
         makenewdir('{}/avgbrain/{}/covariate_files'.format(working_dir, struct_var_metric))

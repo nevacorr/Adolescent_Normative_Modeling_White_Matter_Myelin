@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import shutil
+from numpy.core.defchararray import capitalize
 from pcntoolkit.normative import estimate, evaluate
 from plot_num_subjs import plot_num_subjs
 from Utility_Functions import create_design_matrix, plot_data_with_spline
@@ -11,6 +12,19 @@ from apply_normative_model_time2 import apply_normative_model_time2
 
 def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, train_set_array, test_set_array,
                show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids, sex):
+
+    if sex == 'all':
+        dirdata = 'data'
+        dirpredict = 'predict_files'
+    else:
+        dirdata = f'data_{sex}'
+        dirpredict = f'predict_files_{sex}'
+
+    # show bar plots with number of subjects per age group in pre-COVID data
+    if show_nsubject_plots:
+        plot_num_subjs(all_data_v1_orig, f'{capitalize(sex)} Subjects by Age with Pre-COVID {struct_var_metric} Data\n'
+                                       '(Total N=' + str(all_data_v1_orig.shape[0]) + ')', struct_var_metric,
+                                        f'pre-covid_{sex} subjects',working_dir, dirdata)
 
     Z2_all_splits = pd.DataFrame()
 
@@ -29,14 +43,7 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
             plot_num_subjs(all_data_v1,
                            'Split ' + str(split) + ' Subjects by Age with Pre-COVID Data used to Train Model\n'
                                                    '(Total N=' + str(all_data_v1.shape[0]) + ')', struct_var_metric,
-                           'pre-covid_train', working_dir)
-
-        if sex == 'all':
-            dirdata = 'data'
-            dirpredict = 'predict_files'
-        else:
-            dirdata = f'data_{sex}'
-            dirpredict = f'predict_{sex}'
+                           'pre-covid_train', working_dir, dirdata)
 
         makenewdir('{}/{}/{}/ROI_models'.format(working_dir, dirdata, struct_var_metric))
         makenewdir('{}/{}/{}/covariate_files'.format(working_dir, dirdata, struct_var_metric))

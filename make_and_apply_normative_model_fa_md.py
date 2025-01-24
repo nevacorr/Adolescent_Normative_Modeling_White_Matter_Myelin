@@ -70,12 +70,6 @@ def make_and_apply_normative_model_fa_md(mfseparate, struct_var, show_plots, sho
             mpf_all_data_v1 = mpf_all_data_v1[mpf_all_data_v1['sex'] == sexflag].copy()
             mpf_all_data_v2 = mpf_all_data_v2[mpf_all_data_v2['sex'] == sexflag].copy()
 
-        # show bar plots with number of subjects per age group in pre-COVID data
-        if show_nsubject_plots:
-            plot_num_subjs(fa_all_data_v1, f'{capitalize(sex)} Subjects by Age with Pre-COVID FA Data\n'
-                                     '(Total N=' + str(fa_all_data_v1.shape[0]) + ')', 'fa', f'pre-covid_{sex} subjects',
-                                      working_dir)
-
         # remove subjects to exclude v1 from sub_v1_only
         sub_v1_only = [val for val in sub_v1_only if val not in subjects_to_exclude_v1]
         # remove subjects to exclude v2 from sub_v2_only

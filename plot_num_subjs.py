@@ -5,7 +5,7 @@
 import seaborn as sns
 import numpy as np
 from matplotlib import pyplot as plt
-def plot_num_subjs(df, title, struct_var, timept, path):
+def plot_num_subjs(df, title, struct_var, timept, path, dirdata):
     sns.set_style(style='white')
     g = sns.catplot(x="age", hue="sex", data=df, kind="count", legend=False, palette=sns.color_palette(['green', 'blue']))
     g.fig.suptitle(title, fontsize=20)
@@ -20,4 +20,4 @@ def plot_num_subjs(df, title, struct_var, timept, path):
         }, fontsize=18)
     g.ax.set(yticks=np.arange(0,20,2))
     plt.show(block=False)
-    plt.savefig('{}/data/{}/plots/NumSubjects_{}'.format(path, struct_var, timept))
+    plt.savefig('{}/{}/{}/plots/NumSubjects_{}'.format(path, dirdata, struct_var, timept))
