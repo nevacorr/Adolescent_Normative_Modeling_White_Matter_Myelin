@@ -10,7 +10,6 @@ import seaborn as sns
 import shutil
 import glob
 from pcntoolkit.util.utils import create_bspline_basis
-from matplotlib.colors import ListedColormap
 from scipy import stats
 import ast
 
@@ -407,3 +406,67 @@ def make_nm_directories(working_dir, dirdata, dirpredict_files):
     for struct_var_metric in ['fa', 'md', 'mpf']:
         makenewdir('{}/{}'.format(dirpath, struct_var_metric))
         makenewdir('{}/{}/plots'.format(dirpath, struct_var_metric))
+
+def plot_data_with_spline_one_gender(gender, datastr, struct_var, cov_file, resp_file, dummy_cov_file_path, model_dir, roi,
+                                     showplots, working_dir, dirdata, dirpredict):
+
+    output = predict(dummy_cov_file_path, respfile=None, alg='blr', model_path=model_dir)
+
+    yhat_predict_dummy=output[0]
+
+    # Load real data predictor variables for region
+    X = np.loadtxt(cov_file)
+    # Load real data response variables for region
+    y = np.loadtxt(resp_file)
+
+    # Create dataframes for plotting with seaborn facetgrid objects
+    dummy_cov = np.loadtxt(dummy_cov_file_path)
+    df_origdata = pd.DataFrame(data=X[:, 0], columns=['Age in Days'])
+    df_origdata[struct_var] = y.tolist()
+    df_origdata['Age in Days'] = df_origdata['Age in Days'] / 365.25
+    df_estspline = pd.DataFrame(data=dummy_cov[:, 0].tolist(),columns=['Age in Days'])
+    df_estspline['Age in Days'] = df_estspline['Age in Days'] / 365.25
+    tmp = np.array(yhat_predict_dummy.tolist(), dtype=float)
+    df_estspline[struct_var] = tmp
+    df_estspline = df_estspline.drop(index=df_estspline.iloc[999].name).reset_index(drop=True)
+
+    # Plot figure
+    fig=plt.figure()
+    if gender == 'females':
+        color = 'green'
+    else:
+        color = 'blue'
+    sns.lineplot(data=df_estspline, x='Age in Days', y=struct_var, color=color, legend=False)
+    sns.scatterplot(data=df_origdata, x='Age in Days', y=struct_var, color=color)
+    ax = plt.gca()
+    fig.subplots_adjust(right=0.82)
+    plt.title(datastr +' ' + struct_var +  ' vs. Age\n' + roi.replace(struct_var+'-', ''))
+    plt.xlabel('Age')
+    plt.ylabel(datastr + struct_var)
+    if showplots == 1:
+        if datastr == 'Training Data':
+            plt.show(block=False)
+        else:
+            plt.show()
+    else:
+        plt.savefig('{}/{}/{}/plots/{}_vs_age_withsplinefit_{}_{}'
+                .format(working_dir, dirdata, struct_var, struct_var, roi.replace(struct_var+'-', ''), datastr))
+        plt.close(fig)
+    if datastr == 'Training Data':
+        splinemodel_fname = f'{working_dir}/{dirdata}/{struct_var}/plots/spline_model_{datastr}_{roi}_{gender}.csv'
+        origdata_fname = f'{working_dir}/{dirdata}/{struct_var}/plots/datapoints_{datastr}_{roi}_{gender}.csv'
+        df_estspline.to_csv(splinemodel_fname)
+        df_origdata.to_csv(origdata_fname)
+
+    # Write model to file if training set so male and female data and models can be viewed on same plot
+    if datastr == 'Training Data':
+        splinemodel_fname = f'{working_dir}/{dirdata}/{struct_var}/plots/spline_model_{datastr}_{roi}_{gender}.csv'
+        df_estspline.to_csv(splinemodel_fname)
+        origdata_fname = f'{working_dir}/{dirdata}/{struct_var}/plots/datapoints_{datastr}_{roi}_{gender}.csv'
+    # Write actual data points to file for this data set
+    if datastr == 'Postcovid (Test) Data ':
+        origdata_fname = f'{working_dir}/{dirpredict}/{struct_var}/plots/datapoints_{datastr}_{roi}_{gender}.csv'
+    if datastr == 'Validation Data':
+        origdata_fname = f'{working_dir}/{dirdata}/{struct_var}/plots/datapoints_{datastr}_{roi}_{gender}.csv'
+    df_origdata.to_csv(origdata_fname)
+    mystop=1

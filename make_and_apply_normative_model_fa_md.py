@@ -1,15 +1,6 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import os
-import shutil
-
-from numpy.core.defchararray import capitalize
-from sklearn.model_selection import train_test_split, StratifiedShuffleSplit
-from pcntoolkit.normative import estimate, evaluate
-from plot_num_subjs import plot_num_subjs
-from Load_Genz_Data_WWM_FA_MD import load_genz_data_wm_fa_md, load_genz_data_wm_mpf_v1
-from apply_normative_model_time2 import apply_normative_model_time2
+from sklearn.model_selection import StratifiedShuffleSplit
 from make_model import make_model
 from Utility_Functions import make_nm_directories
 from load_data_all import load_data_all

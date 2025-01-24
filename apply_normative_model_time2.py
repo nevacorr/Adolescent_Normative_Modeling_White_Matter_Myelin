@@ -5,13 +5,13 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from plot_num_subjs import plot_num_subjs
-from Utility_Functions import makenewdir, movefiles, create_dummy_design_matrix
+from Utility_Functions import makenewdir, movefiles, create_dummy_design_matrix, plot_data_with_spline_one_gender
 from Utility_Functions import plot_data_with_spline, create_design_matrix, read_ages_from_file
 import shutil
 from normative_edited import predict
 
 def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
-                                working_dir, all_data_v2, roi_ids, dirdata, dirpredict):
+                                working_dir, all_data_v2, roi_ids, dirdata, dirpredict, sex):
 
     ######################## Apply Normative Model to Post-Covid Data ############################
 
@@ -124,11 +124,16 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
         dummy_cov_file_path_female, dummy_cov_file_path_male= \
             create_dummy_design_matrix(struct_var, agemin, agemax, cov_file_te, spline_order, spline_knots,
                                                   working_dir)
-
-        plot_data_with_spline('Postcovid (Test) Data ', struct_var, cov_file_te, resp_file_te,
-                                         dummy_cov_file_path_female, dummy_cov_file_path_male, model_dir, roi,
-                                        show_plots, working_dir, dirdata)
-
+        if sex == 'all':
+            plot_data_with_spline('Postcovid (Test) Data ', struct_var, cov_file_te, resp_file_te,
+                                             dummy_cov_file_path_female, dummy_cov_file_path_male, model_dir, roi,
+                                            show_plots, working_dir, dirdata)
+        elif sex == 'female':
+            plot_data_with_spline_one_gender(sex, 'Postcovid (Test) Data ', struct_var, cov_file_te, resp_file_te, dummy_cov_file_path_female,
+                                             model_dir, roi, show_plots, working_dir, dirdata, dirpredict)
+        elif sex == 'male':
+            plot_data_with_spline_one_gender(sex, 'Postcovid (Test) Data ', struct_var, cov_file_te, resp_file_te, dummy_cov_file_path_male,
+                                             model_dir, roi, show_plots, working_dir, dirdata, dirpredict)
         mystop=1
 
     Z_time2.to_csv('{}/{}/{}/Z_scores_by_region_postcovid_testset_Final.txt'

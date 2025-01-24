@@ -3,7 +3,7 @@ import os
 import shutil
 from numpy.core.defchararray import capitalize
 from pcntoolkit.normative import estimate, evaluate
-from plot_num_subjs import plot_num_subjs
+from plot_num_subjs import plot_num_subjs, plot_num_subjs_one_subject
 from Utility_Functions import create_design_matrix, plot_data_with_spline
 from Utility_Functions import create_dummy_design_matrix
 from Utility_Functions import barplot_performance_values, plot_y_v_yhat, makenewdir, movefiles
@@ -40,10 +40,15 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
 
         # plot number of subjects of each gender by age who are included in training data set
         if show_nsubject_plots:
-            plot_num_subjs(all_data_v1,
-                           'Split ' + str(split) + ' Subjects by Age with Pre-COVID Data used to Train Model\n'
-                                                   '(Total N=' + str(all_data_v1.shape[0]) + ')', struct_var_metric,
-                           'pre-covid_train', working_dir, dirdata)
+            if sex == 'all':
+                plot_num_subjs(all_data_v1,
+                               'Split ' + str(split) + ' Subjects by Age with Pre-COVID Data used to Train Model\n'
+                                                       '(Total N=' + str(all_data_v1.shape[0]) + ')', struct_var_metric,
+                               'pre-covid_train', working_dir, dirdata)
+            else:
+                plot_num_subjs_one_subject(all_data_v1, sex, 'Split ' + str(split) + f'{capitalize(sex)} Subjects by Age with Pre-COVID Data used to Train Model\n'
+                                                       '(Total N=' + str(all_data_v1.shape[0]) + ')', struct_var_metric,
+                                                        'pre-covid_train', working_dir, dirdata)
 
         makenewdir('{}/{}/{}/ROI_models'.format(working_dir, dirdata, struct_var_metric))
         makenewdir('{}/{}/{}/covariate_files'.format(working_dir, dirdata, struct_var_metric))
@@ -158,7 +163,7 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
                                   dummy_cov_file_path_male, model_dir, roi, show_plots, working_dir, dirdata)
 
         Z_time2 = apply_normative_model_time2(struct_var_metric, show_plots, show_nsubject_plots, spline_order, spline_knots,
-                                    working_dir, all_data_v2, roi_ids, dirdata, dirpredict)
+                                    working_dir, all_data_v2, roi_ids, dirdata, dirpredict, sex)
 
         Z_time2['split'] = split
 

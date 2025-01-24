@@ -11,12 +11,11 @@ import os
 import matplotlib.pyplot as plt
 from plot_and_compute_zdistributions import plot_and_compute_zcores_by_gender
 from make_and_apply_normative_model_fa_md import make_and_apply_normative_model_fa_md
-from compute_df_correlations import compute_df_correlations
 
 struct_var = 'fa_and_md_and_mpf'
 n_splits = 1   #Number of train/test splits
-show_plots = 0          #set to 1 to show training and test data ymvs yhat and spline fit plots.
-show_nsubject_plots = 0 #set to 1 to plot number of subjects used in analysis, for each age and gender
+show_plots = 1          #set to 1 to show training and test data ymvs yhat and spline fit plots.
+show_nsubject_plots = 1 #set to 1 to plot number of subjects used in analysis, for each age and gender
 spline_order = 1        # order of spline to use for model
 spline_knots = 2        # number of knots in spline to use in model
 perform_train_test_split_precovid = 0 #flag indicating whether to split the training set (pre-COVID data) into train and validation data
