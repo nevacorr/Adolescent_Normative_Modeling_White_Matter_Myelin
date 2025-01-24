@@ -34,37 +34,42 @@ def make_and_apply_normative_model_fa_md(mfseparate, struct_var, show_plots, sho
 
     # Keep and process only the data for the sexes of interest
     if mfseparate == 0:
+        sexes = ['all']
         make_nm_directories(working_dir, 'data', 'predict_files')
-        sexes = 'all'
-        sub_v1_only = sub_v1_only_orig.copy()
-        sub_v2_only = sub_v2_only_orig.copy()
-        sub_v1_only_mpf = sub_v1_only_mpf_orig.copy()
-        sub_v2_only_mpf = sub_v2_only_mpf_orig.copy()
     else:
         sexes = ['females', 'males']
         for sex in sexes:
             make_nm_directories(working_dir, f'data_{sex}', f'predict_files_{sex}')
-            if sex == 'females':
-                sexflag = 0
-                sub_v1_only = [sub for sub in sub_v1_only_orig if sub %2 == 0]
-                sub_v2_only = [sub for sub in sub_v1_only_orig if sub % 2 == 0]
-                sub_v1_only_mpf = [sub for sub in sub_v1_only_mpf_orig if sub % 2 == 0]
-                sub_v2_only_mpf = [sub for sub in sub_v2_only_mpf_orig if sub % 2 == 0]
-            elif sex == 'males':
-                sexflag = 1
-                sub_v1_only = [sub for sub in sub_v1_only_orig if sub % 2 != 0]
-                sub_v2_only = [sub for sub in sub_v1_only_orig if sub % 2 != 0]
-                sub_v1_only_mpf = [sub for sub in sub_v1_only_mpf_orig if sub % 2 != 0]
-                sub_v2_only_mpf = [sub for sub in sub_v2_only_mpf_orig if sub % 2 != 0]
 
+    for sex in sexes:
+        if sex == 'all':
+            sub_v1_only = sub_v1_only_orig.copy()
+            sub_v2_only = sub_v2_only_orig.copy()
+            sub_v1_only_mpf = sub_v1_only_mpf_orig.copy()
+            sub_v2_only_mpf = sub_v2_only_mpf_orig.copy()
+
+        if sex == 'females':
+            sexflag = 0
+            sub_v1_only = [sub for sub in sub_v1_only_orig if sub % 2 == 0]
+            sub_v2_only = [sub for sub in sub_v1_only_orig if sub % 2 == 0]
+            sub_v1_only_mpf = [sub for sub in sub_v1_only_mpf_orig if sub % 2 == 0]
+            sub_v2_only_mpf = [sub for sub in sub_v2_only_mpf_orig if sub % 2 == 0]
+
+        elif sex == 'males':
+            sexflag = 1
+            sub_v1_only = [sub for sub in sub_v1_only_orig if sub % 2 != 0]
+            sub_v2_only = [sub for sub in sub_v1_only_orig if sub % 2 != 0]
+            sub_v1_only_mpf = [sub for sub in sub_v1_only_mpf_orig if sub % 2 != 0]
+            sub_v2_only_mpf = [sub for sub in sub_v2_only_mpf_orig if sub % 2 != 0]
+
+        if (sex == 'females' or sex == 'males'):
             fa_all_data_v1 = fa_all_data_v1[fa_all_data_v1['sex'] == sexflag].copy()
             fa_all_data_v2 = fa_all_data_v2[fa_all_data_v2['sex'] == sexflag].copy()
             md_all_data_v1 = md_all_data_v1[md_all_data_v1['sex'] == sexflag].copy()
             md_all_data_v2 = md_all_data_v2[md_all_data_v2['sex'] == sexflag].copy()
             mpf_all_data_v1 = mpf_all_data_v1[mpf_all_data_v1['sex'] == sexflag].copy()
-            mpf_all_data_v2 = mpf_all_data_v1[mpf_all_data_v2['sex'] == sexflag].copy()
+            mpf_all_data_v2 = mpf_all_data_v2[mpf_all_data_v2['sex'] == sexflag].copy()
 
-    for sex in sexes:
         # show bar plots with number of subjects per age group in pre-COVID data
         if show_nsubject_plots:
             plot_num_subjs(fa_all_data_v1, f'{capitalize(sex)} Subjects by Age with Pre-COVID FA Data\n'
@@ -127,16 +132,16 @@ def make_and_apply_normative_model_fa_md(mfseparate, struct_var, show_plots, sho
         mpf_all_data_v2_orig = mpf_all_data_v2
 
         Z2_all_splits_fa = make_model(fa_all_data_v1_orig, fa_all_data_v2_orig, 'fa', n_splits, train_set_array, test_set_array,
-                   show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids)
+                   show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids, sex)
 
         Z2_all_splits_md = make_model(md_all_data_v1_orig, md_all_data_v2_orig, 'md', n_splits, train_set_array, test_set_array,
-                   show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids)
+                   show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids, sex)
 
         roi_ids_tmp = roi_ids.copy()
         roi_ids_tmp.remove('Left Uncinate FA')
         roi_ids_tmp.remove('Right Uncinate FA')
         Z2_all_splits_mpf = make_model(mpf_all_data_v1_orig, mpf_all_data_v2_orig, 'mpf', n_splits, train_set_array, test_set_array,
-                   show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids_tmp)
+                   show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids_tmp, sex)
 
         Z2_all_splits_fa_dict[sex] = Z2_all_splits_fa
         Z2_all_splits_md_dict[sex] = Z2_all_splits_md

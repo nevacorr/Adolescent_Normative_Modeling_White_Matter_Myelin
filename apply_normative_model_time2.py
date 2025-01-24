@@ -11,15 +11,15 @@ import shutil
 from normative_edited import predict
 
 def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
-                                working_dir, all_data_v2, roi_ids):
+                                working_dir, all_data_v2, roi_ids, dirdata, dirpredict):
 
     ######################## Apply Normative Model to Post-Covid Data ############################
 
     all_data_v2 = all_data_v2[all_data_v2['participant_id']<400]
 
-    makenewdir('{}/predict_files/{}/ROI_models'.format(working_dir, struct_var))
-    makenewdir('{}/predict_files/{}/covariate_files'.format(working_dir, struct_var))
-    makenewdir('{}/predict_files/{}/response_files'.format(working_dir, struct_var))
+    makenewdir('{}/{}/{}/ROI_models'.format(working_dir, dirpredict, struct_var))
+    makenewdir('{}/{}/{}/covariate_files'.format(working_dir, dirpredict, struct_var))
+    makenewdir('{}/{}/{}/response_files'.format(working_dir, dirpredict, struct_var))
 
     # reset indices
     all_data_v2.reset_index(inplace=True, drop=True)
@@ -39,9 +39,9 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
 
     #specify paths
     training_dir = '{}/data/{}/ROI_models/'.format(working_dir, struct_var)
-    out_dir = '{}/predict_files/{}/ROI_models/'.format(working_dir, struct_var)
+    out_dir = '{}/{}/{}/ROI_models/'.format(working_dir, dirpredict, struct_var)
     #  this path is where ROI_models folders are located
-    predict_files_dir = '{}/predict_files/{}/ROI_models/'.format(working_dir, struct_var)
+    predict_files_dir = '{}/{}/{}/ROI_models/'.format(working_dir, dirpredict, struct_var)
 
     ##########
     # Create output directories for each region and place covariate and response files for that region in  each directory.
@@ -70,7 +70,7 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
         y_test.to_csv(f'{working_dir}/resp_te.txt', sep='\t', header=False, index=False)
 
     for i in roi_ids:
-        roidirname = '{}/predict_files/{}/ROI_models/{}'.format(working_dir, struct_var, i)
+        roidirname = '{}/{}/{}/ROI_models/{}'.format(working_dir, dirpredict, struct_var, i)
         makenewdir(roidirname)
         resp_te_filename = "{}/resp_te_{}.txt".format(working_dir, i)
         resp_te_filepath = roidirname + '/resp_te.txt'
@@ -78,10 +78,10 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
         cov_te_filepath = roidirname + '/cov_te.txt'
         shutil.copyfile("{}/cov_te_{}.txt".format(working_dir, i), cov_te_filepath)
 
-    movefiles("{}/resp_*.txt".format(working_dir), "{}/predict_files/{}/response_files/"
-              .format(working_dir, struct_var))
-    movefiles("{}/cov_t*.txt".format(working_dir), "{}/predict_files/{}/covariate_files/"
-              .format(working_dir, struct_var))
+    movefiles("{}/resp_*.txt".format(working_dir), "{}/{}/{}/response_files/"
+              .format(working_dir, dirpredict, struct_var))
+    movefiles("{}/cov_t*.txt".format(working_dir), "{}/{}/{}/covariate_files/"
+              .format(working_dir, dirpredict, struct_var))
 
     # Create dataframe to store Zscores
     Z_time2 = pd.DataFrame()
@@ -127,12 +127,12 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
 
         plot_data_with_spline('Postcovid (Test) Data ', struct_var, cov_file_te, resp_file_te,
                                          dummy_cov_file_path_female, dummy_cov_file_path_male, model_dir, roi,
-                                        show_plots, working_dir)
+                                        show_plots, working_dir, dirdata)
 
         mystop=1
 
-    Z_time2.to_csv('{}/predict_files/{}/Z_scores_by_region_postcovid_testset_Final.txt'
-                                .format(working_dir, struct_var), index=False)
+    Z_time2.to_csv('{}/{}/{}/Z_scores_by_region_postcovid_testset_Final.txt'
+                                .format(working_dir, dirpredict, struct_var), index=False)
 
     plt.show()
 

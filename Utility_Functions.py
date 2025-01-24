@@ -125,7 +125,7 @@ def create_dummy_design_matrix(struct_var, agemin, agemax, cov_file, spline_orde
 
 # this function plots data with spline model superimposed, for both male and females
 def plot_data_with_spline(datastr, struct_var, cov_file, resp_file, dummy_cov_file_path_female,
-                              dummy_cov_file_path_male, model_dir, roi, showplots, working_dir):
+                              dummy_cov_file_path_male, model_dir, roi, showplots, working_dir, dirdata):
 
     output_f = predict(dummy_cov_file_path_female, respfile=None, alg='blr', model_path=model_dir)
 
@@ -175,8 +175,8 @@ def plot_data_with_spline(datastr, struct_var, cov_file, resp_file, dummy_cov_fi
         else:
             plt.show()
     else:
-        plt.savefig('{}/data/{}/plots/{}_vs_age_withsplinefit_{}_{}'
-                .format(working_dir, struct_var, struct_var, roi.replace(struct_var+'-', ''), datastr))
+        plt.savefig('{}/{}/{}/plots/{}_vs_age_withsplinefit_{}_{}'
+                .format(working_dir, dirdata, struct_var, struct_var, roi.replace(struct_var+'-', ''), datastr))
         plt.close(fig)
 
 def plot_data_with_spline_avg_brain(datastr, struct_var, cov_file, resp_file, dummy_cov_file_path_female,
@@ -391,10 +391,10 @@ def make_nm_directories(working_dir, dirdata, dirpredict_files):
         print(f"Directory '{dirpath}' and its contents have been removed.")
     except FileNotFoundError:
         print(f"Directory '{dirpath}' does not exist.")
-    makenewdir('{}/dirdata/'.format(working_dir))
+    makenewdir(dirpath)
     for struct_var_metric in ['fa', 'md', 'mpf']:
-        makenewdir('{}/dirdata/{}'.format(working_dir, struct_var_metric))
-        makenewdir('{}/dirdata/{}/plots'.format(working_dir, struct_var_metric))
+        makenewdir('{}/{}'.format(dirpath, struct_var_metric))
+        makenewdir('{}/{}/plots'.format(dirpath, struct_var_metric))
 
     # make file directories for model testing
     dirpath = os.path.join(working_dir, dirpredict_files)
@@ -403,7 +403,7 @@ def make_nm_directories(working_dir, dirdata, dirpredict_files):
         print(f"Directory '{dirpath}' and its contents have been removed.")
     except FileNotFoundError:
         print(f"Directory '{dirpath}' does not exist.")
-    makenewdir('{}/dirpredict_files/'.format(working_dir))
+    makenewdir(dirpath)
     for struct_var_metric in ['fa', 'md', 'mpf']:
-        makenewdir('{}/dirpredict_files/{}'.format(working_dir, struct_var_metric))
-        makenewdir('{}/dirpredict_files/{}/plots'.format(working_dir, struct_var_metric))
+        makenewdir('{}/{}'.format(dirpath, struct_var_metric))
+        makenewdir('{}/{}/plots'.format(dirpath, struct_var_metric))

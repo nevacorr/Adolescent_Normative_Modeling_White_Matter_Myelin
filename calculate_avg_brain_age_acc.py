@@ -100,7 +100,7 @@ def calculate_avg_brain_age_acceleration_make_model(desc_string, all_data, all_d
 
         #compute splines and superimpose on data. Show on screen or save to file depending on show_plots value.
         plot_data_with_spline('Training Data', struct_var, cov_file_tr, resp_file_tr, dummy_cov_file_path_female,
-                              dummy_cov_file_path_male, model_dir, roi, show_plots, filepath)
+                              dummy_cov_file_path_male, model_dir, roi, show_plots, filepath, "avgbrain")
 
     plt.show()
 
@@ -195,7 +195,7 @@ def calculate_avg_brain_age_acceleration_apply_model(roi_ids, desc_string, all_d
 
         #compute splines and superimpose on data. Show on screen or save to file depending on show_plots value.
         plot_data_with_spline('Test Data', struct_var, cov_file_te, resp_file_te, dummy_cov_file_path_female,
-                              dummy_cov_file_path_male, model_dir, roi, show_plots, working_dir)
+                              dummy_cov_file_path_male, model_dir, roi, show_plots, working_dir, 'avgbrain')
 
 
         #calculate brain age acceleration for each region

@@ -10,7 +10,7 @@ from Utility_Functions import write_ages_to_file
 from apply_normative_model_time2 import apply_normative_model_time2
 
 def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, train_set_array, test_set_array,
-               show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids):
+               show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids, sex):
 
     Z2_all_splits = pd.DataFrame()
 
@@ -31,9 +31,16 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
                                                    '(Total N=' + str(all_data_v1.shape[0]) + ')', struct_var_metric,
                            'pre-covid_train', working_dir)
 
-        makenewdir('{}/data/{}/ROI_models'.format(working_dir, struct_var_metric))
-        makenewdir('{}/data/{}/covariate_files'.format(working_dir, struct_var_metric))
-        makenewdir('{}/data/{}/response_files'.format(working_dir, struct_var_metric))
+        if sex == 'all':
+            dirdata = 'data'
+            dirpredict = 'predict_files'
+        else:
+            dirdata = f'data_{sex}'
+            dirpredict = f'predict_{sex}'
+
+        makenewdir('{}/{}/{}/ROI_models'.format(working_dir, dirdata, struct_var_metric))
+        makenewdir('{}/{}/{}/covariate_files'.format(working_dir, dirdata, struct_var_metric))
+        makenewdir('{}/{}/{}/response_files'.format(working_dir, dirdata, struct_var_metric))
 
         if struct_var_metric != 'fa':
             roi_ids = [s.replace('FA', struct_var_metric.upper()) for s in roi_ids]
@@ -83,7 +90,7 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
             y_train.to_csv(f'{working_dir}/resp_tr.txt', sep='\t', header=False, index=False)
 
         for i in roi_ids:
-            roidirname = '{}/data/{}/ROI_models/{}'.format(working_dir, struct_var_metric, i)
+            roidirname = '{}/{}/{}/ROI_models/{}'.format(working_dir, dirdata, struct_var_metric, i)
             makenewdir(roidirname)
             cov_tr_filepath = roidirname + '/cov_tr.txt'
             shutil.copyfile("{}/cov_tr_{}.txt".format(working_dir, i), cov_tr_filepath)
@@ -92,11 +99,11 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
             resp_tr_filepath = roidirname + '/resp_tr.txt'
             shutil.copyfile(resp_tr_filename, resp_tr_filepath)
 
-        movefiles("{}/resp_*.txt".format(working_dir), "{}/data/{}/response_files/".format(working_dir, struct_var_metric))
-        movefiles("{}/cov_t*.txt".format(working_dir), "{}/data/{}/covariate_files/".format(working_dir, struct_var_metric))
+        movefiles("{}/resp_*.txt".format(working_dir), "{}/{}/{}/response_files/".format(working_dir, dirdata, struct_var_metric))
+        movefiles("{}/cov_t*.txt".format(working_dir), "{}/{}/{}/covariate_files/".format(working_dir, dirdata, struct_var_metric))
 
         #  this path is where ROI_models folders are located
-        data_dir = '{}/data/{}/ROI_models/'.format(working_dir, struct_var_metric)
+        data_dir = '{}/{}/{}/ROI_models/'.format(working_dir, dirdata, struct_var_metric)
 
         # Create Design Matrix and add in spline basis and intercept for validation and training data
         create_design_matrix('train', agemin, agemax, spline_order, spline_knots, roi_ids, data_dir)
@@ -141,10 +148,10 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
 
             # Compute splines and superimpose on data. Show on screen or save to file depending on show_plots value.
             plot_data_with_spline('Training Data', struct_var_metric, cov_file_tr, resp_file_tr, dummy_cov_file_path_female,
-                                  dummy_cov_file_path_male, model_dir, roi, show_plots, working_dir)
+                                  dummy_cov_file_path_male, model_dir, roi, show_plots, working_dir, dirdata)
 
         Z_time2 = apply_normative_model_time2(struct_var_metric, show_plots, show_nsubject_plots, spline_order, spline_knots,
-                                    working_dir, all_data_v2, roi_ids)
+                                    working_dir, all_data_v2, roi_ids, dirdata, dirpredict)
 
         Z_time2['split'] = split
 

@@ -47,10 +47,6 @@ if run_make_norm_model:
                            mpf_visit2_datafile, subjects_to_exclude_time1, subjects_to_exclude_time2, mpf_subjects_to_exclude_time1,
                            mpf_subjects_to_exclude_time2, file_with_demographics, n_splits)
 
-    compute_df_correlations(Z_time2_fa, Z_time2_md)
-
-    plt.show(block=False)
-
     tmp = Z_time2_fa.groupby(by=['participant_id'])
     Z_time2_fa = Z_time2_fa.groupby(by=['participant_id']).mean().drop(columns=['split'])
     Z_time2_md = Z_time2_md.groupby(by=['participant_id']).mean().drop(columns=['split'])
