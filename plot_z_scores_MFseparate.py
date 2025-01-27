@@ -13,8 +13,8 @@ from Utility_Functions import write_list_to_file
 
 def one_plot(ax, ptitle, ptitleB, Z_male_region, Z_female_region, binedges, zlim, yeslegend, nokde):
     if nokde==1:
-        ax.hist(Z_male_region, bins=binedges, label='male', alpha=0.4, color='b')
-        ax.hist(Z_female_region, bins=binedges, label='female', alpha=0.4, color='crimson')
+        ax.hist(Z_female_region, bins=binedges, label='female', alpha=1.0, color='crimson')
+        ax.hist(Z_male_region, bins=binedges, label='male', alpha=0.7, color='b')
         ax.set_ylabel('Number of Subjects', fontsize=14)
     elif nokde==0:
         Z_male_df = pd.Series(Z_male_region, name='male').to_frame()
@@ -29,7 +29,6 @@ def one_plot(ax, ptitle, ptitleB, Z_male_region, Z_female_region, binedges, zlim
     ax.set_xlabel('Z-score', fontsize=14)
     plt.text(0.5, 1.08, ptitleB, fontsize=14, fontweight='bold', ha = 'center', va='bottom', transform=ax.transAxes)
     plt.text(0.5, 1.01, ptitle, fontsize=14, ha='center', va='bottom', transform=ax.transAxes)
-    #ax.set_title(ptitle, fontsize=16)
     ax.tick_params(axis='both', which='major', labelsize=12)
     if yeslegend:
         ax.legend(fontsize=14)

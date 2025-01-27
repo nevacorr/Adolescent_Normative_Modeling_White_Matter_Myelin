@@ -29,11 +29,7 @@ def one_plot(ax, ptitle, ptitleB, Z_male_region, Z_female_region, binedges, zlim
     ax.axvline(x=0, color='dimgray', linestyle='--', linewidth=1.2)
     ax.set_xlim(-zlim, zlim)
     ax.set_xlabel('Z-score', fontsize=14)
-    # reduce font size for region that has overlap with other titles
-    if 'caudal anterior cingulate' in ptitleB:
-        plt.text(0.5, 1.12, ptitleB, fontsize=12, fontweight='bold', ha='center', va='bottom', transform=ax.transAxes)
-    else:
-        plt.text(0.5, 1.12, ptitleB, fontsize=14, fontweight='bold', ha = 'center', va='bottom', transform=ax.transAxes)
+    plt.text(0.5, 1.12, ptitleB, fontsize=14, fontweight='bold', ha = 'center', va='bottom', transform=ax.transAxes)
     plt.text(0.5, 1.01, ptitle, fontsize=14, ha='center', va='bottom', transform=ax.transAxes)
     ax.tick_params(axis='both', which='major', labelsize=12)
     # Switch order in legend so males are listed first to be consistent with other plots in manuscript
@@ -42,7 +38,6 @@ def one_plot(ax, ptitle, ptitleB, Z_male_region, Z_female_region, binedges, zlim
     # Reorder the handles and labels
     order = [1, 0]  # This assumes the 'female' is first and 'male' is second
     ax.legend([handles[idx] for idx in order], [labels[idx] for idx in order], fontsize=10)
-    # plt.tight_layout()
 
 def plot_separate_figures_sorted(df, Z_female, Z_male, binedges, zlim, struct_var,f, nokde, working_dir, nsplits):
     sig_string_list = []
