@@ -26,6 +26,41 @@ def movefiles(pattern, folder):
         shutil.move(file, folder +  file_name)
         print('moved:', file)
 
+def create_design_matrix_one_gender(datatype, agemin, agemax, spline_order, spline_knots, roi_ids, data_dir):
+    B = create_bspline_basis(agemin, agemax, p=spline_order, nknots=spline_knots)
+    for roi in roi_ids:
+        print('Creating basis expansion for ROI:', roi)
+        roi_dir = os.path.join(data_dir, roi)
+        os.chdir(roi_dir)
+        # Create output dir
+        os.makedirs(os.path.join(roi_dir, 'blr'), exist_ok=True)
+
+        # Load train & test covariate data matrices
+        if datatype == 'train':
+            X = np.loadtxt(os.path.join(roi_dir, 'cov_tr.txt'))
+        elif datatype == 'test':
+            f=os.listdir(roi_dir)
+            p = os.path.join(roi_dir, 'cov_te.txt')
+            tmp=np.loadtxt(p)
+            X = np.loadtxt(os.path.join(roi_dir, 'cov_te.txt'))
+
+        # Add intercept column
+        X = np.vstack((X, np.ones(len(X)))).T
+
+        if datatype == 'train':
+            np.savetxt(os.path.join(roi_dir, 'cov_int_tr.txt'), X)
+        elif datatype == 'test':
+            np.savetxt(os.path.join(roi_dir, 'cov_int_te.txt'), X)
+
+        # Create Bspline basis set
+        # This creates a numpy array called Phi by applying function B to each element of the first column of X
+        Phi = np.array([B(i) for i in X[:, 0]])
+        X = np.concatenate((X, Phi), axis=1)
+        if datatype == 'train':
+            np.savetxt(os.path.join(roi_dir, 'cov_bspline_tr.txt'), X)
+        elif datatype == 'test':
+            np.savetxt(os.path.join(roi_dir, 'cov_bspline_te.txt'), X)
+
 def create_design_matrix(datatype, agemin, agemax, spline_order, spline_knots, roi_ids, data_dir):
     B = create_bspline_basis(agemin, agemax, p=spline_order, nknots=spline_knots)
     for roi in roi_ids:

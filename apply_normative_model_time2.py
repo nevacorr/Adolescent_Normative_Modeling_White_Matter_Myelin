@@ -7,6 +7,7 @@ from matplotlib import pyplot as plt
 from plot_num_subjs import plot_num_subjs
 from Utility_Functions import makenewdir, movefiles, create_dummy_design_matrix, plot_data_with_spline_one_gender
 from Utility_Functions import plot_data_with_spline, create_design_matrix, read_ages_from_file
+from Utility_Functions import create_design_matrix_one_gender
 import shutil
 from normative_edited import predict
 
@@ -32,7 +33,10 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
                        +' (Total N=' + str(all_data_v2.shape[0]) + ')', struct_var, 'post-covid_allsubj', working_dir, dirdata)
 
     #specify which columns of dataframe to use as covariates
-    X_test = all_data_v2[['agedays', 'sex']]
+    if sex == 'all':
+        X_test = all_data_v2[['agedays', 'sex']]
+    else:
+        X_test = all_data_v2[['agedays']]
 
     #make a matrix of response variables, one for each brain region
     y_test = all_data_v2.loc[:, roi_ids]
@@ -91,7 +95,10 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
     ####Make Predictions of Brain Structural Measures Post-Covid based on Pre-Covid Normative Model
 
     #create design matrices for all regions and save files in respective directories
-    create_design_matrix('test', agemin, agemax, spline_order, spline_knots, roi_ids, predict_files_dir)
+    if sex == 'all':
+        create_design_matrix('test', agemin, agemax, spline_order, spline_knots, roi_ids, predict_files_dir)
+    else:
+        create_design_matrix_one_gender('test', agemin, agemax, spline_order, spline_knots, roi_ids, predict_files_dir)
 
     for roi in roi_ids:
         print('Running ROI:', roi)
@@ -108,7 +115,6 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
         # make predictions
         yhat_te, s2_te, Z = predict(cov_file_te, respfile=resp_file_te, alg='blr', model_path=model_dir)
 
-        #
         ind=0
         if Z_time2.shape[0] == Z.shape[0]:
             Z_time2[roi] = Z

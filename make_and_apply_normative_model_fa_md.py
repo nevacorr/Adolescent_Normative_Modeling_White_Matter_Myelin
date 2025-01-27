@@ -4,6 +4,12 @@ from sklearn.model_selection import StratifiedShuffleSplit
 from make_model import make_model
 from Utility_Functions import make_nm_directories
 from load_data_all import load_data_all
+from plot_z_scores_MFseparate import plot_and_compute_zcores_by_gender_MFsep
+from plot_and_compute_zdistributions import plot_and_compute_zcores_by_gender
+import matplotlib.pyplot as plt
+import os
+import glob
+from plots_results_mfsepmodels import plot_results
 
 
 def make_and_apply_normative_model_fa_md(mfseparate, struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
@@ -22,6 +28,15 @@ def make_and_apply_normative_model_fa_md(mfseparate, struct_var, show_plots, sho
         load_data_all(struct_var, raw_data_dir, fa_datafilename_v1, fa_datafilename_v2, md_datafilename_v1,
                   md_datafilename_v2, mpf_datafilename_v1, mpf_datafilename_v2, demographics_filename,
                   subjects_to_exclude_v1, subjects_to_exclude_v2, mpf_subjects_to_exclude_v1, mpf_subjects_to_exclude_v2))
+
+    fa_all_data_v1_orig = fa_all_data_v1
+    fa_all_data_v2_orig = fa_all_data_v2
+
+    md_all_data_v1_orig = md_all_data_v1
+    md_all_data_v2_orig = md_all_data_v2
+
+    mpf_all_data_v1_orig = mpf_all_data_v1
+    mpf_all_data_v2_orig = mpf_all_data_v2
 
     # Keep and process only the data for the sexes of interest
     if mfseparate == 0:
@@ -54,12 +69,12 @@ def make_and_apply_normative_model_fa_md(mfseparate, struct_var, show_plots, sho
             sub_v2_only_mpf = [sub for sub in sub_v2_only_mpf_orig if sub % 2 != 0]
 
         if (sex == 'females' or sex == 'males'):
-            fa_all_data_v1 = fa_all_data_v1[fa_all_data_v1['sex'] == sexflag].copy()
-            fa_all_data_v2 = fa_all_data_v2[fa_all_data_v2['sex'] == sexflag].copy()
-            md_all_data_v1 = md_all_data_v1[md_all_data_v1['sex'] == sexflag].copy()
-            md_all_data_v2 = md_all_data_v2[md_all_data_v2['sex'] == sexflag].copy()
-            mpf_all_data_v1 = mpf_all_data_v1[mpf_all_data_v1['sex'] == sexflag].copy()
-            mpf_all_data_v2 = mpf_all_data_v2[mpf_all_data_v2['sex'] == sexflag].copy()
+            fa_all_data_v1 = fa_all_data_v1_orig[fa_all_data_v1_orig['sex'] == sexflag].copy()
+            fa_all_data_v2 = fa_all_data_v2_orig[fa_all_data_v2_orig['sex'] == sexflag].copy()
+            md_all_data_v1 = md_all_data_v1_orig[md_all_data_v1_orig['sex'] == sexflag].copy()
+            md_all_data_v2 = md_all_data_v2_orig[md_all_data_v2_orig['sex'] == sexflag].copy()
+            mpf_all_data_v1 = mpf_all_data_v1_orig[mpf_all_data_v1_orig['sex'] == sexflag].copy()
+            mpf_all_data_v2 = mpf_all_data_v2_orig[mpf_all_data_v2_orig['sex'] == sexflag].copy()
 
         # remove subjects to exclude v1 from sub_v1_only
         sub_v1_only = [val for val in sub_v1_only if val not in subjects_to_exclude_v1]
@@ -85,7 +100,7 @@ def make_and_apply_normative_model_fa_md(mfseparate, struct_var, show_plots, sho
         fa_df_for_train_test_split=fa_df_for_train_test_split[fa_df_for_train_test_split['participant_id'].isin(all_subjects_2ts)]
 
         # Initialize StratifiedShuffleSplit for equal train/test sizes
-        splitter = StratifiedShuffleSplit(n_splits=n_splits, test_size=0.52, random_state=42)
+        splitter = StratifiedShuffleSplit(n_splits=n_splits, test_size=0.50, random_state=42)
 
         train_set_list = []
         test_set_list = []
@@ -107,29 +122,21 @@ def make_and_apply_normative_model_fa_md(mfseparate, struct_var, show_plots, sho
         fname_test = '{}/visit1_subjects_test_sets_{}_splits_{}.txt'.format(working_dir, n_splits, struct_var)
         np.save(fname_test,test_set_array)
 
-        fa_all_data_v1_orig = fa_all_data_v1
-        fa_all_data_v2_orig = fa_all_data_v2
-
-        md_all_data_v1_orig = md_all_data_v1
-        md_all_data_v2_orig = md_all_data_v2
-
-        mpf_all_data_v1_orig = mpf_all_data_v1
-        mpf_all_data_v2_orig = mpf_all_data_v2
-
-        Z2_all_splits_fa = make_model(fa_all_data_v1_orig, fa_all_data_v2_orig, 'fa', n_splits, train_set_array, test_set_array,
+        Z2_all_splits_fa = make_model(fa_all_data_v1, fa_all_data_v2, 'fa', n_splits, train_set_array, test_set_array,
                    show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids, sex)
 
-        Z2_all_splits_md = make_model(md_all_data_v1_orig, md_all_data_v2_orig, 'md', n_splits, train_set_array, test_set_array,
+        Z2_all_splits_md = make_model(md_all_data_v1, md_all_data_v2, 'md', n_splits, train_set_array, test_set_array,
                    show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids, sex)
 
         roi_ids_tmp = roi_ids.copy()
         roi_ids_tmp.remove('Left Uncinate FA')
         roi_ids_tmp.remove('Right Uncinate FA')
-        Z2_all_splits_mpf = make_model(mpf_all_data_v1_orig, mpf_all_data_v2_orig, 'mpf', n_splits, train_set_array, test_set_array,
+        Z2_all_splits_mpf = make_model(mpf_all_data_v1, mpf_all_data_v2, 'mpf', n_splits, train_set_array, test_set_array,
                    show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids_tmp, sex)
 
         Z2_all_splits_fa_dict[sex] = Z2_all_splits_fa
         Z2_all_splits_md_dict[sex] = Z2_all_splits_md
         Z2_all_splits_mpf_dict[sex] = Z2_all_splits_mpf
 
-    return roi_ids, Z2_all_splits_fa_dict, Z2_all_splits_md_dict , Z2_all_splits_mpf_dict
+    plot_results(working_dir, mfseparate, Z2_all_splits_fa_dict, Z2_all_splits_md_dict, Z2_all_splits_mpf_dict,
+                 n_splits, roi_ids)

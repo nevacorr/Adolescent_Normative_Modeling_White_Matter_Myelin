@@ -4,8 +4,8 @@ import shutil
 from numpy.core.defchararray import capitalize
 from pcntoolkit.normative import estimate, evaluate
 from plot_num_subjs import plot_num_subjs, plot_num_subjs_one_subject
-from Utility_Functions import create_design_matrix, plot_data_with_spline
-from Utility_Functions import create_dummy_design_matrix
+from Utility_Functions import create_design_matrix, plot_data_with_spline, create_design_matrix_one_gender
+from Utility_Functions import create_dummy_design_matrix, plot_data_with_spline_one_gender
 from Utility_Functions import barplot_performance_values, plot_y_v_yhat, makenewdir, movefiles
 from Utility_Functions import write_ages_to_file
 from apply_normative_model_time2 import apply_normative_model_time2
@@ -72,8 +72,11 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
         if struct_var_metric == 'fa':
             write_ages_to_file(working_dir, agemin, agemax, struct_var_metric)
 
-        # drop the age column from the train data set because we want to use agedays as a predictor
-        X_train.drop(columns=['age'], inplace=True)
+        # drop the age and sex columns from the train data set because we want to use agedays as a predictor
+        if sex == 'all':
+            X_train.drop(columns=['age'], inplace=True)
+        else:
+            X_train.drop(columns=['age', 'sex'], inplace=True)
 
         ##########
         # Set up output directories. Save each brain region to its own text file, organized in separate directories,
@@ -118,8 +121,10 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
         data_dir = '{}/{}/{}/ROI_models/'.format(working_dir, dirdata, struct_var_metric)
 
         # Create Design Matrix and add in spline basis and intercept for validation and training data
-        create_design_matrix('train', agemin, agemax, spline_order, spline_knots, roi_ids, data_dir)
-        # create_design_matrix('train', agemin, agemax, spline_order, spline_knots, roi_ids, data_dir)
+        if sex == 'all':
+            create_design_matrix('train', agemin, agemax, spline_order, spline_knots, roi_ids, data_dir)
+        else:
+            create_design_matrix_one_gender('train', agemin, agemax, spline_order, spline_knots, roi_ids, data_dir)
 
         # create dataframe with subject numbers to put the Z scores in.
         subjects_train = subjects_train.reshape(-1, 1)
@@ -158,9 +163,18 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
                 create_dummy_design_matrix(struct_var_metric, agemin, agemax, cov_file_tr, spline_order, spline_knots,
                                            working_dir)
 
-            # Compute splines and superimpose on data. Show on screen or save to file depending on show_plots value.
-            plot_data_with_spline('Training Data', struct_var_metric, cov_file_tr, resp_file_tr, dummy_cov_file_path_female,
-                                  dummy_cov_file_path_male, model_dir, roi, show_plots, working_dir, dirdata)
+            if sex == 'all':
+                # Compute splines and superimpose on data. Show on screen or save to file depending on show_plots value.
+                plot_data_with_spline('Training Data', struct_var_metric, cov_file_tr, resp_file_tr, dummy_cov_file_path_female,
+                                      dummy_cov_file_path_male, model_dir, roi, show_plots, working_dir, dirdata)
+            elif sex == 'female':
+                plot_data_with_spline_one_gender(sex, 'Training Data ', struct_var_metric, cov_file_tr, resp_file_tr,
+                                                 dummy_cov_file_path_female,
+                                                 model_dir, roi, show_plots, working_dir, dirdata, dirpredict)
+            elif sex == 'male':
+                plot_data_with_spline_one_gender(sex, 'Training Data ', struct_var_metric, cov_file_tr, resp_file_tr,
+                                                 dummy_cov_file_path_male,
+                                                 model_dir, roi, show_plots, working_dir, dirdata, dirpredict)
 
         Z_time2 = apply_normative_model_time2(struct_var_metric, show_plots, show_nsubject_plots, spline_order, spline_knots,
                                     working_dir, all_data_v2, roi_ids, dirdata, dirpredict, sex)
