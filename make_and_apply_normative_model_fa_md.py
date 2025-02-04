@@ -57,14 +57,14 @@ def make_and_apply_normative_model_fa_md(mfseparate, struct_var, show_plots, sho
         if sex == 'females':
             sexflag = 0
             sub_v1_only = [sub for sub in sub_v1_only_orig if sub % 2 == 0]
-            sub_v2_only = [sub for sub in sub_v1_only_orig if sub % 2 == 0]
+            sub_v2_only = [sub for sub in sub_v2_only_orig if sub % 2 == 0]
             sub_v1_only_mpf = [sub for sub in sub_v1_only_mpf_orig if sub % 2 == 0]
             sub_v2_only_mpf = [sub for sub in sub_v2_only_mpf_orig if sub % 2 == 0]
 
         elif sex == 'males':
             sexflag = 1
             sub_v1_only = [sub for sub in sub_v1_only_orig if sub % 2 != 0]
-            sub_v2_only = [sub for sub in sub_v1_only_orig if sub % 2 != 0]
+            sub_v2_only = [sub for sub in sub_v2_only_orig if sub % 2 != 0]
             sub_v1_only_mpf = [sub for sub in sub_v1_only_mpf_orig if sub % 2 != 0]
             sub_v2_only_mpf = [sub for sub in sub_v2_only_mpf_orig if sub % 2 != 0]
 
@@ -93,14 +93,14 @@ def make_and_apply_normative_model_fa_md(mfseparate, struct_var, show_plots, sho
         fa_df_for_train_test_split = fa_all_data_v1.copy()
 
         # Create a dataframe that has only visit 1 data and only subject number, visit, age and sex as columns
-        cols_to_keep = ['participant_id', 'visit', 'age', 'sex', 'age']
+        cols_to_keep = ['participant_id', 'age', 'sex']
         cols_to_drop = [col for col in fa_df_for_train_test_split if col not in cols_to_keep]
         fa_df_for_train_test_split.drop(columns=cols_to_drop, inplace=True)
         # keep only the subjects that have data at both time points
         fa_df_for_train_test_split=fa_df_for_train_test_split[fa_df_for_train_test_split['participant_id'].isin(all_subjects_2ts)]
 
-        # Initialize StratifiedShuffleSplit for equal train/test sizes
-        splitter = StratifiedShuffleSplit(n_splits=n_splits, test_size=0.50, random_state=42)
+       # Initialize StratifiedShuffleSplit for equal train/test sizes
+        splitter = StratifiedShuffleSplit(n_splits=n_splits, test_size=0.55, random_state=42)
 
         train_set_list = []
         test_set_list = []
