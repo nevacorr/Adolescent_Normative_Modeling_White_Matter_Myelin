@@ -10,7 +10,6 @@ import seaborn as sns
 import shutil
 import glob
 from pcntoolkit.util.utils import create_bspline_basis
-from matplotlib.colors import ListedColormap
 from scipy import stats
 import ast
 
@@ -26,6 +25,41 @@ def movefiles(pattern, folder):
         file_name = os.path.basename(file)
         shutil.move(file, folder +  file_name)
         print('moved:', file)
+
+def create_design_matrix_one_gender(datatype, agemin, agemax, spline_order, spline_knots, roi_ids, data_dir):
+    B = create_bspline_basis(agemin, agemax, p=spline_order, nknots=spline_knots)
+    for roi in roi_ids:
+        print('Creating basis expansion for ROI:', roi)
+        roi_dir = os.path.join(data_dir, roi)
+        os.chdir(roi_dir)
+        # Create output dir
+        os.makedirs(os.path.join(roi_dir, 'blr'), exist_ok=True)
+
+        # Load train & test covariate data matrices
+        if datatype == 'train':
+            X = np.loadtxt(os.path.join(roi_dir, 'cov_tr.txt'))
+        elif datatype == 'test':
+            f=os.listdir(roi_dir)
+            p = os.path.join(roi_dir, 'cov_te.txt')
+            tmp=np.loadtxt(p)
+            X = np.loadtxt(os.path.join(roi_dir, 'cov_te.txt'))
+
+        # Add intercept column
+        X = np.vstack((X, np.ones(len(X)))).T
+
+        if datatype == 'train':
+            np.savetxt(os.path.join(roi_dir, 'cov_int_tr.txt'), X)
+        elif datatype == 'test':
+            np.savetxt(os.path.join(roi_dir, 'cov_int_te.txt'), X)
+
+        # Create Bspline basis set
+        # This creates a numpy array called Phi by applying function B to each element of the first column of X
+        Phi = np.array([B(i) for i in X[:, 0]])
+        X = np.concatenate((X, Phi), axis=1)
+        if datatype == 'train':
+            np.savetxt(os.path.join(roi_dir, 'cov_bspline_tr.txt'), X)
+        elif datatype == 'test':
+            np.savetxt(os.path.join(roi_dir, 'cov_bspline_te.txt'), X)
 
 def create_design_matrix(datatype, agemin, agemax, spline_order, spline_knots, roi_ids, data_dir):
     B = create_bspline_basis(agemin, agemax, p=spline_order, nknots=spline_knots)
@@ -125,7 +159,7 @@ def create_dummy_design_matrix(struct_var, agemin, agemax, cov_file, spline_orde
 
 # this function plots data with spline model superimposed, for both male and females
 def plot_data_with_spline(datastr, struct_var, cov_file, resp_file, dummy_cov_file_path_female,
-                              dummy_cov_file_path_male, model_dir, roi, showplots, working_dir):
+                              dummy_cov_file_path_male, model_dir, roi, showplots, working_dir, dirdata):
 
     output_f = predict(dummy_cov_file_path_female, respfile=None, alg='blr', model_path=model_dir)
 
@@ -175,8 +209,8 @@ def plot_data_with_spline(datastr, struct_var, cov_file, resp_file, dummy_cov_fi
         else:
             plt.show()
     else:
-        plt.savefig('{}/data/{}/plots/{}_vs_age_withsplinefit_{}_{}'
-                .format(working_dir, struct_var, struct_var, roi.replace(struct_var+'-', ''), datastr))
+        plt.savefig('{}/{}/{}/plots/{}_vs_age_withsplinefit_{}_{}'
+                .format(working_dir, dirdata, struct_var, struct_var, roi.replace(struct_var+'-', ''), datastr))
         plt.close(fig)
 
 def plot_data_with_spline_avg_brain(datastr, struct_var, cov_file, resp_file, dummy_cov_file_path_female,
@@ -382,3 +416,92 @@ def plot_age_acceleration(working_dir, nbootstrap, mean_agediff_f, mean_agediff_
     plt.axhline(y=0, color='gray', linestyle='--')
     plt.savefig(f'{working_dir}/Age Acceleration by Sex with CI.pdf', dpi=300, format='pdf')
     plt.show()
+
+def make_nm_directories(working_dir, dirdata, dirpredict_files):
+    # make directories to store files for model creation
+    dirpath = os.path.join(working_dir, dirdata)
+    try:
+        shutil.rmtree(dirpath)
+        print(f"Directory '{dirpath}' and its contents have been removed.")
+    except FileNotFoundError:
+        print(f"Directory '{dirpath}' does not exist.")
+    makenewdir(dirpath)
+    for struct_var_metric in ['fa', 'md', 'mpf']:
+        makenewdir('{}/{}'.format(dirpath, struct_var_metric))
+        makenewdir('{}/{}/plots'.format(dirpath, struct_var_metric))
+
+    # make file directories for model testing
+    dirpath = os.path.join(working_dir, dirpredict_files)
+    try:
+        shutil.rmtree(dirpath)
+        print(f"Directory '{dirpath}' and its contents have been removed.")
+    except FileNotFoundError:
+        print(f"Directory '{dirpath}' does not exist.")
+    makenewdir(dirpath)
+    for struct_var_metric in ['fa', 'md', 'mpf']:
+        makenewdir('{}/{}'.format(dirpath, struct_var_metric))
+        makenewdir('{}/{}/plots'.format(dirpath, struct_var_metric))
+
+def plot_data_with_spline_one_gender(gender, datastr, struct_var, cov_file, resp_file, dummy_cov_file_path, model_dir, roi,
+                                     showplots, working_dir, dirdata, dirpredict):
+
+    output = predict(dummy_cov_file_path, respfile=None, alg='blr', model_path=model_dir)
+
+    yhat_predict_dummy=output[0]
+
+    # Load real data predictor variables for region
+    X = np.loadtxt(cov_file)
+    # Load real data response variables for region
+    y = np.loadtxt(resp_file)
+
+    # Create dataframes for plotting with seaborn facetgrid objects
+    dummy_cov = np.loadtxt(dummy_cov_file_path)
+    df_origdata = pd.DataFrame(data=X[:, 0], columns=['Age in Days'])
+    df_origdata[struct_var] = y.tolist()
+    df_origdata['Age in Days'] = df_origdata['Age in Days'] / 365.25
+    df_estspline = pd.DataFrame(data=dummy_cov[:, 0].tolist(),columns=['Age in Days'])
+    df_estspline['Age in Days'] = df_estspline['Age in Days'] / 365.25
+    tmp = np.array(yhat_predict_dummy.tolist(), dtype=float)
+    df_estspline[struct_var] = tmp
+    df_estspline = df_estspline.drop(index=df_estspline.iloc[999].name).reset_index(drop=True)
+
+    # Plot figure
+    fig=plt.figure()
+    if gender == 'females':
+        color = 'green'
+    else:
+        color = 'blue'
+    sns.lineplot(data=df_estspline, x='Age in Days', y=struct_var, color=color, legend=False)
+    sns.scatterplot(data=df_origdata, x='Age in Days', y=struct_var, color=color)
+    ax = plt.gca()
+    fig.subplots_adjust(right=0.82)
+    plt.title(datastr +' ' + struct_var +  ' vs. Age\n' + roi.replace(struct_var+'-', ''))
+    plt.xlabel('Age')
+    plt.ylabel(datastr + struct_var)
+    if showplots == 1:
+        if datastr == 'Training Data':
+            plt.show(block=False)
+        else:
+            plt.show()
+    else:
+        plt.savefig('{}/{}/{}/plots/{}_vs_age_withsplinefit_{}_{}'
+                .format(working_dir, dirdata, struct_var, struct_var, roi.replace(struct_var+'-', ''), datastr))
+        plt.close(fig)
+    if datastr == 'Training Data':
+        splinemodel_fname = f'{working_dir}/{dirdata}/{struct_var}/plots/spline_model_{datastr}_{roi}_{gender}.csv'
+        origdata_fname = f'{working_dir}/{dirdata}/{struct_var}/plots/datapoints_{datastr}_{roi}_{gender}.csv'
+        df_estspline.to_csv(splinemodel_fname)
+        df_origdata.to_csv(origdata_fname)
+
+    # Write model to file if training set so male and female data and models can be viewed on same plot
+    if datastr == 'Training Data':
+        splinemodel_fname = f'{working_dir}/{dirdata}/{struct_var}/plots/spline_model_{datastr}_{roi}_{gender}.csv'
+        df_estspline.to_csv(splinemodel_fname)
+        origdata_fname = f'{working_dir}/{dirdata}/{struct_var}/plots/datapoints_{datastr}_{roi}_{gender}.csv'
+    # Write actual data points to file for this data set
+    if datastr == 'Postcovid (Test) Data ':
+        origdata_fname = f'{working_dir}/{dirpredict}/{struct_var}/plots/datapoints_{datastr}_{roi}_{gender}.csv'
+    if datastr == 'Validation Data':
+        origdata_fname = f'{working_dir}/{dirdata}/{struct_var}/plots/datapoints_{datastr}_{roi}_{gender}.csv'
+    df_origdata.to_csv(origdata_fname)
+    mystop=1

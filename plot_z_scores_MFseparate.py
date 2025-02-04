@@ -1,6 +1,6 @@
 ###
-#This program plots z-score distributions that represent distributions of deviation from the normative model.
-####
+#This program plots post-covid z-scores from the normative model, and makes a separate curve for each not gender
+###
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -11,14 +11,12 @@ import scipy.stats as stats
 import math
 from Utility_Functions import write_list_to_file
 
-def one_plot(ax, ptitle, ptitleB, Z_male_region, Z_female_region, binedges, zlim, nokde):
+def one_plot(ax, ptitle, ptitleB, Z_male_region, Z_female_region, binedges, zlim, yeslegend, nokde):
     if nokde==1:
-        # plot histogram
         ax.hist(Z_female_region, bins=binedges, label='female', alpha=1.0, color='crimson')
         ax.hist(Z_male_region, bins=binedges, label='male', alpha=0.7, color='b')
         ax.set_ylabel('Number of Subjects', fontsize=14)
     elif nokde==0:
-        # plot histogram with kernel density estimate
         Z_male_df = pd.Series(Z_male_region, name='male').to_frame()
         Z_female_df = pd.Series(Z_female_region, name='female').to_frame()
         Z_male_df.rename(columns={0: 'male'}, inplace=True)
@@ -26,20 +24,17 @@ def one_plot(ax, ptitle, ptitleB, Z_male_region, Z_female_region, binedges, zlim
         sns.kdeplot(Z_male_region, ax=ax, color = 'b', bw_adjust=1, label='male')
         sns.kdeplot(Z_female_region, ax=ax, color = 'crimson', bw_adjust=1, label='female')
         ax.set_ylabel('probability density', fontsize=12)
-    ax.axvline(x=0, color='dimgray', linestyle='--', linewidth=1.2)
+    ax.axvline(x=0, color='dimgray', linestyle='--')
     ax.set_xlim(-zlim, zlim)
     ax.set_xlabel('Z-score', fontsize=14)
-    plt.text(0.5, 1.12, ptitleB, fontsize=14, fontweight='bold', ha = 'center', va='bottom', transform=ax.transAxes)
+    plt.text(0.5, 1.08, ptitleB, fontsize=14, fontweight='bold', ha = 'center', va='bottom', transform=ax.transAxes)
     plt.text(0.5, 1.01, ptitle, fontsize=14, ha='center', va='bottom', transform=ax.transAxes)
     ax.tick_params(axis='both', which='major', labelsize=12)
-    # Switch order in legend so males are listed first to be consistent with other plots in manuscript
-    # Get the handles and labels from the ax
-    handles, labels = ax.get_legend_handles_labels()
-    # Reorder the handles and labels
-    order = [1, 0]  # This assumes the 'female' is first and 'male' is second
-    ax.legend([handles[idx] for idx in order], [labels[idx] for idx in order], fontsize=10)
+    if yeslegend:
+        ax.legend(fontsize=14)
+    # plt.tight_layout()
 
-def plot_separate_figures_sorted(df, Z_female, Z_male, binedges, zlim, struct_var,f, nokde, working_dir, nsplits):
+def plot_separate_figures_sorted(df, Z_female, Z_male, binedges, zlim, struct_var,f, nokde, working_dir):
     sig_string_list = []
     bold_string_list = []
     if nokde == 1:
@@ -69,50 +64,9 @@ def plot_separate_figures_sorted(df, Z_female, Z_male, binedges, zlim, struct_va
                 region_for_title = 'superior temporal'
             elif region_for_title == 'lateraloccipital':
                 region_for_title = 'lateral occipital'
-            elif region_for_title == 'middletemporal':
-                region_for_title = 'middle temporal'
-            elif region_for_title == 'lateralorbitofrontal':
-                region_for_title = 'lateral orbitofrontal'
-            elif region_for_title == 'transversetemporal':
-                region_for_title = 'transverse temporal'
-            elif region_for_title == 'superiorfrontal':
-                region_for_title = 'superior frontal'
-            elif region_for_title == 'temporalpole':
-                region_for_title = 'temporal pole'
-            elif region_for_title == 'caudalmiddlefrontal':
-                region_for_title = 'caudal middle frontal'
-            elif region_for_title == 'inferiortemporal':
-                region_for_title = 'inferior temporal'
-            elif region_for_title == 'parsopercularis':
-                region_for_title = 'pars opercularis'
-            elif region_for_title == 'parsorbitalis':
-                region_for_title = 'pars orbitalis'
-            elif region_for_title == 'inferiorparietal':
-                region_for_title = 'inferior parietal'
-            elif region_for_title == 'rostralmiddlefrontal':
-                region_for_title = 'rostral middle frontal'
-            elif region_for_title == 'superiorfrontal':
-                region_for_title = 'superior frontal'
-            elif region_for_title == 'rostralanteriorcingulate':
-                region_for_title = 'rostral anterior cingulate'
-            elif region_for_title == 'superiorparietal':
-                region_for_title = 'superior parietal'
-            elif region_for_title == 'transversetemporal':
-                region_for_title = 'transverse temporal'
-            elif region_for_title == 'caudalanteriorcingulate':
-                region_for_title = 'caudal anterior cingulate'
-            elif region_for_title == 'parstriangularis':
-                region_for_title = 'pars triangularis'
-            elif region_for_title == 'medialorbitofrontal':
-                region_for_title = 'medial orbitofrontal'
-            elif region_for_title == 'posteriorcingulate':
-                region_for_title = 'posterior cingulate'
-            elif region_for_title == 'isthmuscingulate':
-                region_for_title = 'isthmus cingulate'
-
-        bold_string = f'{hemi}{region_for_title} nsplits={nsplits}\n'
-        not_bold_string = (f'Female mean = {zmean_f:.2}, $\\it{{p}}$ = {df.loc[i, "pfemale"]:.2e}\n '
-                           f'Male mean = {zmean_m:.2}, $\\it{{p}}$ = {df.loc[i, "pmale"]:.2e}')
+        bold_string = f'{hemi}{region_for_title}\n'
+        not_bold_string = (f'female mean = {zmean_f:.2} p = {df.loc[i, "pfemale"]:.2e}\n '
+                           f'male mean = {zmean_m:.2} p = {df.loc[i, "pmale"]:.2e}')
         bold_string_list.append(bold_string)
         sig_string_list.append(not_bold_string)
         #sig_string_list.append(f'{hemi}{region_for_title}\ncortical thickness')
@@ -120,6 +74,12 @@ def plot_separate_figures_sorted(df, Z_female, Z_male, binedges, zlim, struct_va
     fignum = f
     for i, region in enumerate(df['roi_ids']):
         a = (i + 1) % 6
+        if (df.shape[0] <30 ) & (i == df.shape[0]-1):
+            yeslegend = 1
+        elif a == 3:
+            yeslegend = 1
+        else:
+            yeslegend = 0
 
         if a == 1:
             ptitleB = f'{bold_string_list[i]}'
@@ -127,43 +87,40 @@ def plot_separate_figures_sorted(df, Z_female, Z_male, binedges, zlim, struct_va
             fig, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(nrows=2, ncols=3)
             fig.set_size_inches(13.5, 10)
             fig.subplots_adjust(hspace=0.5, wspace=0.3, left=0.05, right=0.95)
-            one_plot(ax1, ptitle, ptitleB, Z_male[region], Z_female[region], binedges, zlim, nokde)
+            one_plot(ax1, ptitle, ptitleB, Z_male[region], Z_female[region], binedges, zlim, yeslegend, nokde)
         elif a == 2:
             ptitle = f'{sig_string_list[i]}'
             ptitleB = f'{bold_string_list[i]}'
-            one_plot(ax2, ptitle, ptitleB, Z_male[region], Z_female[region], binedges, zlim, nokde)
+            one_plot(ax2, ptitle, ptitleB, Z_male[region], Z_female[region], binedges, zlim, yeslegend, nokde)
         elif a == 3:
             ptitle = f'{sig_string_list[i]}'
             ptitleB = f'{bold_string_list[i]}'
-            one_plot(ax3, ptitle, ptitleB, Z_male[region], Z_female[region], binedges, zlim, nokde)
+            one_plot(ax3, ptitle, ptitleB, Z_male[region], Z_female[region], binedges, zlim, yeslegend, nokde)
         elif a % 6 == 4:
             ptitle = f'{sig_string_list[i]}'
             ptitleB = f'{bold_string_list[i]}'
-            one_plot(ax4, ptitle, ptitleB, Z_male[region], Z_female[region], binedges, zlim, nokde)
+            one_plot(ax4, ptitle, ptitleB, Z_male[region], Z_female[region], binedges, zlim, yeslegend, nokde)
         elif a % 6 == 5:
             ptitle = f'{sig_string_list[i]}'
             ptitleB = f'{bold_string_list[i]}'
-            one_plot(ax5, ptitle, ptitleB, Z_male[region], Z_female[region], binedges, zlim, nokde)
+            one_plot(ax5, ptitle, ptitleB, Z_male[region], Z_female[region], binedges, zlim, yeslegend, nokde)
         elif a % 6 == 0:
             ptitle = f'{sig_string_list[i]}'
             ptitleB = f'{bold_string_list[i]}'
-            one_plot(ax6, ptitle, ptitleB, Z_male[region], Z_female[region], binedges, zlim, nokde)
-            plt.savefig(
-                '{}/data/{}/plots/{}_{}.pdf'
-                .format(working_dir, struct_var, figstr, f'fig{fignum}'), dpi=300, format='pdf')
+            one_plot(ax6, ptitle, ptitleB, Z_male[region], Z_female[region], binedges, zlim, yeslegend, nokde)
+            plt.savefig('{}/data_males/{}/plots/{}_{}'.format(working_dir, struct_var, figstr, f'fig{fignum}'))
             fignum += 1
 
-        if i == df.shape[0]-1 and a != 0:
+        if i == df.shape[0]-1:
             plt.savefig(
-                '{}/data/{}/plots/{}_{}.pdf'
-                .format(working_dir, struct_var, figstr, f'fig{fignum}'), dpi=300, format='pdf')
+                '{}/data_males/{}/plots/{}_{}'.format(working_dir, struct_var, figstr, f'fig{fignum}'))
             fignum += 1
 
         plt.show(block=False)
     return fignum
 
 def plot_by_gender_no_kde(struct_var, Z_female, Z_male, roi_ids, reject_f, reject_m, pvals_corrected_f,
-                          pvals_corrected_m, binedges, nokde, working_dir, nsplits):
+                          pvals_corrected_m, binedges, nokde, working_dir):
 
     zmax = math.ceil(binedges[-1])
     zmin = math.floor(binedges[0])
@@ -189,36 +146,45 @@ def plot_by_gender_no_kde(struct_var, Z_female, Z_male, roi_ids, reject_f, rejec
     rois_pvals_notsig.sort_values(by=['pfemale'], axis=0, inplace=True, ignore_index=True)
 
     #plot separate figures for each category
-    fignum=plot_separate_figures_sorted(rois_pvals_sig_femalesigonly, Z_female, Z_male, binedges, zlim, struct_var,0, nokde, working_dir, nsplits)
-    fignum=plot_separate_figures_sorted(rois_pvals_sig_allsig, Z_female, Z_male, binedges, zlim, struct_var, fignum, nokde, working_dir, nsplits)
-    fignum=plot_separate_figures_sorted(rois_pvals_sig_malessigonly, Z_female, Z_male, binedges, zlim,struct_var,fignum, nokde, working_dir, nsplits)
-    fignum=plot_separate_figures_sorted(rois_pvals_notsig, Z_female, Z_male, binedges, zlim,struct_var,fignum, nokde, working_dir, nsplits)
+    fignum=plot_separate_figures_sorted(rois_pvals_sig_femalesigonly, Z_female, Z_male, binedges, zlim,
+                                        struct_var,0, nokde, working_dir)
+    fignum=plot_separate_figures_sorted(rois_pvals_sig_allsig, Z_female, Z_male, binedges, zlim, struct_var,
+                                        fignum, nokde, working_dir)
+    fignum=plot_separate_figures_sorted(rois_pvals_sig_malessigonly, Z_female, Z_male, binedges, zlim,struct_var,
+                                        fignum, nokde, working_dir)
+    fignum=plot_separate_figures_sorted(rois_pvals_notsig, Z_female, Z_male, binedges, zlim,struct_var,fignum,
+                                        nokde, working_dir)
 
     plt.show()
     mystop=1
 
-def plot_and_compute_zcores_by_gender(Z_time2, struct_var, roi_ids, working_dir, nsplits):
-    #add gender to Z score dataframe
-    #females have even subject numbers, males have odd subject numbers
-    Z_time2['gender'] = Z_time2['participant_id'].apply(lambda x: 0 if x % 2 == 0 else 1)
-    #move the gender column to the front of the dataframe
-    gender = Z_time2.pop('gender')
-    Z_time2.insert(1, 'gender', gender)
+def plot_and_compute_zcores_by_gender_MFsep(struct_var, Z_timepoint2, working_dir, roi_ids):
 
-    Z_female = Z_time2[Z_time2['gender']== 0]
-    Z_male = Z_time2[Z_time2['gender'] == 1]
+    Z_male = Z_timepoint2['males']
+    Z_female = Z_timepoint2['females']
+
+    # add gender to Z score dataframe
+    Z_male['gender'] = 1
+    Z_female['gender'] = 2
+    #move the gender column to the front of the dataframes
+    gender = Z_male.pop('gender')
+    Z_male.insert(1, 'gender', gender)
+    gender = Z_female.pop('gender')
+    Z_female.insert(1, 'gender', gender)
+
+    #get list of all brain regions
+    sinfo = ['participant_id', 'gender']
+    # roi_ids = [col for col in Z_male.columns if col not in sinfo]
 
     p_values_f = []
     p_values_m = []
     for region in roi_ids:
-        zf_orig = Z_female[region].values
-        zf = zf_orig[~np.isnan(zf_orig)]
-        t_statistic_f, p_value_f = stats.ttest_1samp(zf, popmean=0, nan_policy='raise')
+        zf = Z_female[region].values
+        t_statistic_f, p_value_f = stats.ttest_1samp(zf, popmean=0, nan_policy='omit')
         p_values_f.append(p_value_f)
 
-        zm_orig = Z_male[region].values
-        zm = zm_orig[~np.isnan(zm_orig)]
-        t_statistic_m, p_value_m = stats.ttest_1samp(zm, popmean=0, nan_policy='raise')
+        zm = Z_male[region].values
+        t_statistic_m, p_value_m = stats.ttest_1samp(zm, popmean=0, nan_policy='omit')
         p_values_m.append(p_value_m)
 
     reject_f, pvals_corrected_f, a1_f, a2_f = smt.multipletests(p_values_f, alpha=0.05, method='fdr_bh')
@@ -228,7 +194,7 @@ def plot_and_compute_zcores_by_gender(Z_time2, struct_var, roi_ids, working_dir,
     regions_reject_f = [roi_id for roi_id, reject_value in zip(roi_ids, reject_f) if reject_value]
     regions_reject_m = [roi_id for roi_id, reject_value in zip(roi_ids, reject_m) if reject_value]
 
-    filepath = f'{working_dir}/'
+    filepath = working_dir
     if len(regions_reject_f) > 1 :
         write_list_to_file(regions_reject_f, filepath + f'regions_reject_null_{struct_var}_female.csv')
         write_list_to_file(regions_reject_m, filepath + f'regions_reject_null_{struct_var}_male.csv')
@@ -245,5 +211,5 @@ def plot_and_compute_zcores_by_gender(Z_time2, struct_var, roi_ids, working_dir,
 
     nokde=1
     plot_by_gender_no_kde(struct_var, Z_female, Z_male, roi_ids, reject_f, reject_m, pvals_corrected_f,
-                          pvals_corrected_m, binedges, nokde, working_dir, nsplits)
+                          pvals_corrected_m, binedges, nokde, working_dir)
 

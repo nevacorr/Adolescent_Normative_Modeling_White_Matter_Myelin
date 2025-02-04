@@ -5,21 +5,22 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from plot_num_subjs import plot_num_subjs
-from Utility_Functions import makenewdir, movefiles, create_dummy_design_matrix
+from Utility_Functions import makenewdir, movefiles, create_dummy_design_matrix, plot_data_with_spline_one_gender
 from Utility_Functions import plot_data_with_spline, create_design_matrix, read_ages_from_file
+from Utility_Functions import create_design_matrix_one_gender
 import shutil
 from normative_edited import predict
 
 def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
-                                working_dir, all_data_v2, roi_ids):
+                                working_dir, all_data_v2, roi_ids, dirdata, dirpredict, sex):
 
     ######################## Apply Normative Model to Post-Covid Data ############################
 
     all_data_v2 = all_data_v2[all_data_v2['participant_id']<400]
 
-    makenewdir('{}/predict_files/{}/ROI_models'.format(working_dir, struct_var))
-    makenewdir('{}/predict_files/{}/covariate_files'.format(working_dir, struct_var))
-    makenewdir('{}/predict_files/{}/response_files'.format(working_dir, struct_var))
+    makenewdir('{}/{}/{}/ROI_models'.format(working_dir, dirpredict, struct_var))
+    makenewdir('{}/{}/{}/covariate_files'.format(working_dir, dirpredict, struct_var))
+    makenewdir('{}/{}/{}/response_files'.format(working_dir, dirpredict, struct_var))
 
     # reset indices
     all_data_v2.reset_index(inplace=True, drop=True)
@@ -29,19 +30,22 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
     #show number of subjects by gender and age
     if show_nsubject_plots:
         plot_num_subjs(all_data_v2, 'Subjects with Post-COVID Data\nEvaluated by Model\n'
-                       +' (Total N=' + str(all_data_v2.shape[0]) + ')', struct_var, 'post-covid_allsubj', working_dir)
+                       +' (Total N=' + str(all_data_v2.shape[0]) + ')', struct_var, 'post-covid_allsubj', working_dir, dirdata)
 
     #specify which columns of dataframe to use as covariates
-    X_test = all_data_v2[['agedays', 'sex']]
+    if sex == 'all':
+        X_test = all_data_v2[['agedays', 'sex']]
+    else:
+        X_test = all_data_v2[['agedays']]
 
     #make a matrix of response variables, one for each brain region
     y_test = all_data_v2.loc[:, roi_ids]
 
     #specify paths
-    training_dir = '{}/data/{}/ROI_models/'.format(working_dir, struct_var)
-    out_dir = '{}/predict_files/{}/ROI_models/'.format(working_dir, struct_var)
+    training_dir = '{}/{}/{}/ROI_models/'.format(working_dir, dirdata, struct_var)
+    out_dir = '{}/{}/{}/ROI_models/'.format(working_dir, dirpredict, struct_var)
     #  this path is where ROI_models folders are located
-    predict_files_dir = '{}/predict_files/{}/ROI_models/'.format(working_dir, struct_var)
+    predict_files_dir = '{}/{}/{}/ROI_models/'.format(working_dir, dirpredict, struct_var)
 
     ##########
     # Create output directories for each region and place covariate and response files for that region in  each directory.
@@ -70,7 +74,7 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
         y_test.to_csv(f'{working_dir}/resp_te.txt', sep='\t', header=False, index=False)
 
     for i in roi_ids:
-        roidirname = '{}/predict_files/{}/ROI_models/{}'.format(working_dir, struct_var, i)
+        roidirname = '{}/{}/{}/ROI_models/{}'.format(working_dir, dirpredict, struct_var, i)
         makenewdir(roidirname)
         resp_te_filename = "{}/resp_te_{}.txt".format(working_dir, i)
         resp_te_filepath = roidirname + '/resp_te.txt'
@@ -78,10 +82,10 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
         cov_te_filepath = roidirname + '/cov_te.txt'
         shutil.copyfile("{}/cov_te_{}.txt".format(working_dir, i), cov_te_filepath)
 
-    movefiles("{}/resp_*.txt".format(working_dir), "{}/predict_files/{}/response_files/"
-              .format(working_dir, struct_var))
-    movefiles("{}/cov_t*.txt".format(working_dir), "{}/predict_files/{}/covariate_files/"
-              .format(working_dir, struct_var))
+    movefiles("{}/resp_*.txt".format(working_dir), "{}/{}/{}/response_files/"
+              .format(working_dir, dirpredict, struct_var))
+    movefiles("{}/cov_t*.txt".format(working_dir), "{}/{}/{}/covariate_files/"
+              .format(working_dir, dirpredict, struct_var))
 
     # Create dataframe to store Zscores
     Z_time2 = pd.DataFrame()
@@ -91,7 +95,10 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
     ####Make Predictions of Brain Structural Measures Post-Covid based on Pre-Covid Normative Model
 
     #create design matrices for all regions and save files in respective directories
-    create_design_matrix('test', agemin, agemax, spline_order, spline_knots, roi_ids, predict_files_dir)
+    if sex == 'all':
+        create_design_matrix('test', agemin, agemax, spline_order, spline_knots, roi_ids, predict_files_dir)
+    else:
+        create_design_matrix_one_gender('test', agemin, agemax, spline_order, spline_knots, roi_ids, predict_files_dir)
 
     for roi in roi_ids:
         print('Running ROI:', roi)
@@ -108,7 +115,6 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
         # make predictions
         yhat_te, s2_te, Z = predict(cov_file_te, respfile=resp_file_te, alg='blr', model_path=model_dir)
 
-        #
         ind=0
         if Z_time2.shape[0] == Z.shape[0]:
             Z_time2[roi] = Z
@@ -124,15 +130,20 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
         dummy_cov_file_path_female, dummy_cov_file_path_male= \
             create_dummy_design_matrix(struct_var, agemin, agemax, cov_file_te, spline_order, spline_knots,
                                                   working_dir)
-
-        plot_data_with_spline('Postcovid (Test) Data ', struct_var, cov_file_te, resp_file_te,
-                                         dummy_cov_file_path_female, dummy_cov_file_path_male, model_dir, roi,
-                                        show_plots, working_dir)
-
+        if sex == 'all':
+            plot_data_with_spline('Postcovid (Test) Data ', struct_var, cov_file_te, resp_file_te,
+                                             dummy_cov_file_path_female, dummy_cov_file_path_male, model_dir, roi,
+                                            show_plots, working_dir, dirdata)
+        elif sex == 'female':
+            plot_data_with_spline_one_gender(sex, 'Postcovid (Test) Data ', struct_var, cov_file_te, resp_file_te, dummy_cov_file_path_female,
+                                             model_dir, roi, show_plots, working_dir, dirdata, dirpredict)
+        elif sex == 'male':
+            plot_data_with_spline_one_gender(sex, 'Postcovid (Test) Data ', struct_var, cov_file_te, resp_file_te, dummy_cov_file_path_male,
+                                             model_dir, roi, show_plots, working_dir, dirdata, dirpredict)
         mystop=1
 
-    Z_time2.to_csv('{}/predict_files/{}/Z_scores_by_region_postcovid_testset_Final.txt'
-                                .format(working_dir, struct_var), index=False)
+    Z_time2.to_csv('{}/{}/{}/Z_scores_by_region_postcovid_testset_Final.txt'
+                                .format(working_dir, dirpredict, struct_var), index=False)
 
     plt.show()
 
