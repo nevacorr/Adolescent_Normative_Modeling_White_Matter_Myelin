@@ -72,7 +72,7 @@ def load_genz_data_wm_mpf_v1(struct_var, path, braindatafilename_v1, braindatafi
 
     # put data from both visits in same dataframe
     brain_data = pd.concat([brain_data_v1, brain_data_v2])
-    # brain_data['Subject'] = brain_data['Subject'].astype('int64')
+
     # get demographic data
     demo_data = pd.read_csv(f'{path}/{demographics_filename}')
     demo_to_keep = ['subject', 'visit', 'gender', 'agemonths', 'agedays', 'agegroup']
