@@ -11,20 +11,16 @@ from Utility_Functions import write_ages_to_file
 from apply_normative_model_time2 import apply_normative_model_time2
 
 def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, train_set_array, test_set_array,
-               show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids, sex):
+               show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids):
 
-    if sex == 'all':
-        dirdata = 'data'
-        dirpredict = 'predict_files'
-    else:
-        dirdata = f'data_{sex}'
-        dirpredict = f'predict_files_{sex}'
+    dirdata = 'data'
+    dirpredict = 'predict_files'
 
     # show bar plots with number of subjects per age group in pre-COVID data
     if show_nsubject_plots:
-        plot_num_subjs(all_data_v1_orig, f'{capitalize(sex)} Subjects by Age with Pre-COVID {struct_var_metric} Data\n'
+        plot_num_subjs(all_data_v1_orig, f'Subjects by Age with Pre-COVID {struct_var_metric} Data\n'
                                        '(Total N=' + str(all_data_v1_orig.shape[0]) + ')', struct_var_metric,
-                                        f'pre-covid_{sex} subjects',working_dir, dirdata)
+                                        f'pre-covid subjects',working_dir, dirdata)
 
     Z2_all_splits = pd.DataFrame()
 
@@ -40,15 +36,11 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
 
         # plot number of subjects of each gender by age who are included in training data set
         if show_nsubject_plots:
-            if sex == 'all':
-                plot_num_subjs(all_data_v1,
-                               'Split ' + str(split) + ' Subjects by Age with Pre-COVID Data used to Train Model\n'
-                                                       '(Total N=' + str(all_data_v1.shape[0]) + ')', struct_var_metric,
-                               'pre-covid_train', working_dir, dirdata)
-            else:
-                plot_num_subjs_one_subject(all_data_v1, sex, 'Split ' + str(split) + f'{capitalize(sex)} Subjects by Age with Pre-COVID Data used to Train Model\n'
-                                                       '(Total N=' + str(all_data_v1.shape[0]) + ')', struct_var_metric,
-                                                        'pre-covid_train', working_dir, dirdata)
+            plot_num_subjs(all_data_v1,
+                           'Split ' + str(split) + ' Subjects by Age with Pre-COVID Data used to Train Model\n'
+                                                   '(Total N=' + str(all_data_v1.shape[0]) + ')', struct_var_metric,
+                           'pre-covid_train', working_dir, dirdata)
+
 
         makenewdir('{}/{}/{}/ROI_models'.format(working_dir, dirdata, struct_var_metric))
         makenewdir('{}/{}/{}/covariate_files'.format(working_dir, dirdata, struct_var_metric))
@@ -72,11 +64,8 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
         if struct_var_metric == 'fa':
             write_ages_to_file(working_dir, agemin, agemax, struct_var_metric)
 
-        # drop the age and sex columns from the train data set because we want to use agedays as a predictor
-        if sex == 'all':
-            X_train.drop(columns=['age'], inplace=True)
-        else:
-            X_train.drop(columns=['age', 'sex'], inplace=True)
+        # drop the age column from the train data set because we want to use agedays and sex as predictors
+        X_train.drop(columns=['age'], inplace=True)
 
         ##########
         # Set up output directories. Save each brain region to its own text file, organized in separate directories,
@@ -121,10 +110,7 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
         data_dir = '{}/{}/{}/ROI_models/'.format(working_dir, dirdata, struct_var_metric)
 
         # Create Design Matrix and add in spline basis and intercept for validation and training data
-        if sex == 'all':
-            create_design_matrix('train', agemin, agemax, spline_order, spline_knots, roi_ids, data_dir)
-        else:
-            create_design_matrix_one_gender('train', agemin, agemax, spline_order, spline_knots, roi_ids, data_dir)
+        create_design_matrix('train', agemin, agemax, spline_order, spline_knots, roi_ids, data_dir)
 
         # create dataframe with subject numbers to put the Z scores in.
         subjects_train = subjects_train.reshape(-1, 1)
@@ -163,21 +149,13 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
                 create_dummy_design_matrix(struct_var_metric, agemin, agemax, cov_file_tr, spline_order, spline_knots,
                                            working_dir)
 
-            if sex == 'all':
-                # Compute splines and superimpose on data. Show on screen or save to file depending on show_plots value.
-                plot_data_with_spline('Training Data', struct_var_metric, cov_file_tr, resp_file_tr, dummy_cov_file_path_female,
-                                      dummy_cov_file_path_male, model_dir, roi, show_plots, working_dir, dirdata)
-            elif sex == 'female':
-                plot_data_with_spline_one_gender(sex, 'Training Data ', struct_var_metric, cov_file_tr, resp_file_tr,
-                                                 dummy_cov_file_path_female,
-                                                 model_dir, roi, show_plots, working_dir, dirdata, dirpredict)
-            elif sex == 'male':
-                plot_data_with_spline_one_gender(sex, 'Training Data ', struct_var_metric, cov_file_tr, resp_file_tr,
-                                                 dummy_cov_file_path_male,
-                                                 model_dir, roi, show_plots, working_dir, dirdata, dirpredict)
+            # Compute splines and superimpose on data. Show on screen or save to file depending on show_plots value.
+            plot_data_with_spline('Training Data', struct_var_metric, cov_file_tr, resp_file_tr, dummy_cov_file_path_female,
+                                  dummy_cov_file_path_male, model_dir, roi, show_plots, working_dir, dirdata)
+
 
         Z_time2 = apply_normative_model_time2(struct_var_metric, show_plots, show_nsubject_plots, spline_order, spline_knots,
-                                    working_dir, all_data_v2, roi_ids, dirdata, dirpredict, sex)
+                                    working_dir, all_data_v2, roi_ids, dirdata, dirpredict)
 
         Z_time2['split'] = split
 

@@ -12,7 +12,7 @@ import shutil
 from normative_edited import predict
 
 def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
-                                working_dir, all_data_v2, roi_ids, dirdata, dirpredict, sex):
+                                working_dir, all_data_v2, roi_ids, dirdata, dirpredict):
 
     ######################## Apply Normative Model to Post-Covid Data ############################
 
@@ -33,10 +33,7 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
                        +' (Total N=' + str(all_data_v2.shape[0]) + ')', struct_var, 'post-covid_allsubj', working_dir, dirdata)
 
     #specify which columns of dataframe to use as covariates
-    if sex == 'all':
-        X_test = all_data_v2[['agedays', 'sex']]
-    else:
-        X_test = all_data_v2[['agedays']]
+    X_test = all_data_v2[['agedays', 'sex']]
 
     #make a matrix of response variables, one for each brain region
     y_test = all_data_v2.loc[:, roi_ids]
@@ -95,10 +92,7 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
     ####Make Predictions of Brain Structural Measures Post-Covid based on Pre-Covid Normative Model
 
     #create design matrices for all regions and save files in respective directories
-    if sex == 'all':
-        create_design_matrix('test', agemin, agemax, spline_order, spline_knots, roi_ids, predict_files_dir)
-    else:
-        create_design_matrix_one_gender('test', agemin, agemax, spline_order, spline_knots, roi_ids, predict_files_dir)
+    create_design_matrix('test', agemin, agemax, spline_order, spline_knots, roi_ids, predict_files_dir)
 
     for roi in roi_ids:
         print('Running ROI:', roi)
@@ -130,17 +124,11 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
         dummy_cov_file_path_female, dummy_cov_file_path_male= \
             create_dummy_design_matrix(struct_var, agemin, agemax, cov_file_te, spline_order, spline_knots,
                                                   working_dir)
-        if sex == 'all':
-            plot_data_with_spline('Postcovid (Test) Data ', struct_var, cov_file_te, resp_file_te,
-                                             dummy_cov_file_path_female, dummy_cov_file_path_male, model_dir, roi,
+
+        plot_data_with_spline('Postcovid (Test) Data ', struct_var, cov_file_te, resp_file_te,
+                                            dummy_cov_file_path_female, dummy_cov_file_path_male, model_dir, roi,
                                             show_plots, working_dir, dirdata)
-        elif sex == 'female':
-            plot_data_with_spline_one_gender(sex, 'Postcovid (Test) Data ', struct_var, cov_file_te, resp_file_te, dummy_cov_file_path_female,
-                                             model_dir, roi, show_plots, working_dir, dirdata, dirpredict)
-        elif sex == 'male':
-            plot_data_with_spline_one_gender(sex, 'Postcovid (Test) Data ', struct_var, cov_file_te, resp_file_te, dummy_cov_file_path_male,
-                                             model_dir, roi, show_plots, working_dir, dirdata, dirpredict)
-        mystop=1
+
 
     Z_time2.to_csv('{}/{}/{}/Z_scores_by_region_postcovid_testset_Final.txt'
                                 .format(working_dir, dirpredict, struct_var), index=False)

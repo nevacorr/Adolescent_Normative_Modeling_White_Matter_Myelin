@@ -11,7 +11,7 @@ def load_genz_tract_profile_data(visit, data_dir, datafilename):
     pattern_to_remove = r'_(?:[1-9]|1[0-9]|20|8[1-9]|9[0-9]|100)$'
 
     # Filter the dataframe to keep only columns that don't match the pattern
-    data = data_orig[data_orig.columns[~data_orig.columns.str.contains(pattern_to_remove)]]
+    data = data_orig[data_orig.columns[~data_orig.columns.str.contains(pattern_to_remove)]].copy()
 
     # Convert subject numbers to integers
     data['Subject'] = data['Subject'].str.replace('sub-genz', '', regex=False).astype(int)

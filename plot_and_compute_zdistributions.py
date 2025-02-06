@@ -110,7 +110,7 @@ def plot_separate_figures_sorted(df, Z_female, Z_male, binedges, zlim, struct_va
             elif region_for_title == 'isthmuscingulate':
                 region_for_title = 'isthmus cingulate'
 
-        bold_string = f'{hemi}{region_for_title} nsplits={nsplits}\n'
+        bold_string = f'{hemi}{region_for_title} {struct_var} nsplits={nsplits}\n'
         not_bold_string = (f'Female mean = {zmean_f:.2}, $\\it{{p}}$ = {df.loc[i, "pfemale"]:.2e}\n '
                            f'Male mean = {zmean_m:.2}, $\\it{{p}}$ = {df.loc[i, "pmale"]:.2e}')
         bold_string_list.append(bold_string)

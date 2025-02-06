@@ -22,7 +22,6 @@ spline_order = 1        # order of spline to use for model
 spline_knots = 2        # number of knots in spline to use in model
 perform_train_test_split_precovid = 0 #flag indicating whether to split the training set (pre-COVID data) into train and validation data
 data_dir = '/home/toddr/neva/PycharmProjects/data_dir'
-mf_separate = 1  # indicate whether to create separate models for males and females
 
 fa_visit1_datafile = 'genz_tract_profile_data/genzFA_tractProfiles_visit1.csv'
 fa_visit2_datafile = 'genz_tract_profile_data/genzFA_tractProfiles_visit2.csv'
@@ -43,7 +42,7 @@ working_dir = os.getcwd()
 
 if run_make_norm_model:
 
-   make_and_apply_normative_model_fa_md(mf_separate, struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
+    Z_time2_fa, Z_time2_md, Z_time2_mpf, roi_ids = make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
                            data_dir, working_dir, fa_visit1_datafile, fa_visit2_datafile, md_visit1_datafile, md_visit2_datafile, mpf_visit1_datafile,
                            mpf_visit2_datafile, subjects_to_exclude_time1, subjects_to_exclude_time2, mpf_subjects_to_exclude_time1,
                            mpf_subjects_to_exclude_time2, file_with_demographics, n_splits)
@@ -61,19 +60,20 @@ if run_make_norm_model:
     plot_and_compute_zcores_by_gender(Z_time2_fa, 'fa', roi_ids, working_dir, n_splits)
     Z_time2_fa.to_csv(f'{working_dir}/Z_time2_fa_{n_splits}_splits.csv')
 
-    roi_ids_md = roi_ids.copy()
-    roi_ids_md = [s.replace('FA', 'MD') for s in roi_ids_md]
-    plot_and_compute_zcores_by_gender(Z_time2_md, 'md', roi_ids_md, working_dir, n_splits)
+    # roi_ids_md = roi_ids.copy()
+    # roi_ids_md = [s.replace('FA', 'MD') for s in roi_ids]
+    plot_and_compute_zcores_by_gender(Z_time2_md, 'md', roi_ids, working_dir, n_splits)
     Z_time2_md.to_csv(f'{working_dir}/Z_time2_md_{n_splits}_splits.csv')
 
     roi_ids_mpf = roi_ids.copy()
-    roi_ids_mpf.remove('Left Uncinate FA')
-    roi_ids_mpf.remove('Right Uncinate FA')
-    roi_ids_mpf = [s.replace('FA', 'MPF') for s in roi_ids_mpf]
+
+    roi_ids_mpf = [reg for reg in roi_ids_mpf if 'Uncinate' not in reg]
+
+    # roi_ids_mpf = [s.replace('FA', 'MPF') for s in roi_ids_mpf]
     plot_and_compute_zcores_by_gender(Z_time2_mpf, 'mpf', roi_ids_mpf, working_dir, n_splits)
     Z_time2_mpf.to_csv(f'{working_dir}/Z_time2_mpf_{n_splits}_splits.csv')
 
     plt.show()
 
     mystop=1
-
+    #

@@ -2,18 +2,15 @@
 
 from Load_Genz_Data_WWM_FA_MD import load_genz_data_wm_fa_md, load_genz_data_wm_mpf_v1
 
-def load_data_all(struct_var, raw_data_dir, fa_datafilename_v1, fa_datafilename_v2, md_datafilename_v1,
+def load_data_all(raw_data_dir, fa_datafilename_v1, fa_datafilename_v2, md_datafilename_v1,
               md_datafilename_v2, mpf_datafilename_v1, mpf_datafilename_v2, demographics_filename,
               subjects_to_exclude_v1, subjects_to_exclude_v2, mpf_subjects_to_exclude_v1, mpf_subjects_to_exclude_v2):
 
 # Load all data
-    fa_all_data_both_visits, md_all_data_both_visits, roi_ids, all_subjects, sub_v1_only, sub_v2_only = (
-        load_genz_data_wm_fa_md(struct_var, raw_data_dir, fa_datafilename_v1, fa_datafilename_v2, md_datafilename_v1,
-        md_datafilename_v2, demographics_filename))
-
-    mpf_all_data_both_visits, all_subjects_mpf, sub_v1_only_mpf, sub_v2_only_mpf = (
-        load_genz_data_wm_mpf_v1('mpf', raw_data_dir, mpf_datafilename_v1, mpf_datafilename_v2,
-                                             demographics_filename ))
+    (fa_all_data_both_visits, md_all_data_both_visits, mpf_all_data_both_visits,  roi_ids, all_subjects,
+    all_subjects_mpf, sub_v1_only, sub_v2_only, sub_v1_only_mpf, sub_v2_only_mpf) = (
+        load_genz_data_wm_fa_md(raw_data_dir, fa_datafilename_v1, fa_datafilename_v2, md_datafilename_v1,
+        md_datafilename_v2, mpf_datafilename_v1, mpf_datafilename_v2, demographics_filename))
 
     def process_dataframe(data, visit, subjects_to_exclude):
         df = data.copy()
