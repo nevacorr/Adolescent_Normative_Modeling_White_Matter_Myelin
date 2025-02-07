@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import os
 import shutil
@@ -138,24 +139,31 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
             # load train response files
             resp_file_tr = os.path.join(roi_dir, 'resp_tr.txt')
 
-            # calculate a model based on the training data and apply to the train dataset. The purpose of
-            # running this function is to create and save the model, not to evaluate performance.
-            yhat_tr, s2_tr, nm, Z_tr, metrics_tr = estimate(cov_file_tr, resp_file_tr, testresp=resp_file_tr,
-                                                            testcov=cov_file_tr, alg='blr', optimizer='powell',
-                                                            savemodel=True, saveoutput=False, standardize=False)
+            try:
+                # calculate a model based on the training data and apply to the train dataset. The purpose of
+                # running this function is to create and save the model, not to evaluate performance.
+                yhat_tr, s2_tr, nm, Z_tr, metrics_tr = estimate(cov_file_tr, resp_file_tr, testresp=resp_file_tr,
+                                                                testcov=cov_file_tr, alg='blr', optimizer='powell',
+                                                                savemodel=True, saveoutput=False, standardize=False)
 
-            # create dummy design matrices for visualizing model
-            dummy_cov_file_path_female, dummy_cov_file_path_male = \
-                create_dummy_design_matrix(struct_var_metric, agemin, agemax, cov_file_tr, spline_order, spline_knots,
-                                           working_dir)
+                # create dummy design matrices for visualizing model
+                dummy_cov_file_path_female, dummy_cov_file_path_male = \
+                    create_dummy_design_matrix(struct_var_metric, agemin, agemax, cov_file_tr, spline_order, spline_knots,
+                                               working_dir)
 
-            # Compute splines and superimpose on data. Show on screen or save to file depending on show_plots value.
-            plot_data_with_spline('Training Data', struct_var_metric, cov_file_tr, resp_file_tr, dummy_cov_file_path_female,
-                                  dummy_cov_file_path_male, model_dir, roi, show_plots, working_dir, dirdata)
+                # Compute splines and superimpose on data. Show on screen or save to file depending on show_plots value.
+                plot_data_with_spline('Training Data', struct_var_metric, cov_file_tr, resp_file_tr, dummy_cov_file_path_female,
+                                      dummy_cov_file_path_male, model_dir, roi, show_plots, working_dir, dirdata)
 
+            except:
+                yhat_tr = np.nan
+                s2_tr = np.nan
+                nm = np.nan
+                Z_tr = np.nan
+                metrics_tr = np.nan
 
-        Z_time2 = apply_normative_model_time2(struct_var_metric, show_plots, show_nsubject_plots, spline_order, spline_knots,
-                                    working_dir, all_data_v2, roi_ids, dirdata, dirpredict)
+        Z_time2 = apply_normative_model_time2(struct_var_metric, show_plots, show_nsubject_plots, spline_order,
+                                    spline_knots, working_dir, all_data_v2, roi_ids, dirdata, dirpredict)
 
         Z_time2['split'] = split
 

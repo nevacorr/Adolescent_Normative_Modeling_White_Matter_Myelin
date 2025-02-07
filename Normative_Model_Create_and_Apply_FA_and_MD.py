@@ -11,12 +11,14 @@ import os
 import matplotlib.pyplot as plt
 from plot_and_compute_zdistributions import plot_and_compute_zcores_by_gender
 from make_and_apply_normative_model_fa_md import make_and_apply_normative_model_fa_md
+from Utility_Functions import write_list_to_file
+import pandas as pd
 
 struct_var = 'fa_and_md_and_mpf'
 
 n_splits = 1   #Number of train/test splits
 
-show_plots = 0          #set to 1 to show training and test data ymvs yhat and spline fit plots.
+show_plots = 0          #set to 1 to show training and test data y vs yhat and spline fit plots.
 show_nsubject_plots = 0 #set to 1 to plot number of subjects used in analysis, for each age and gender
 spline_order = 1        # order of spline to use for model
 spline_knots = 2        # number of knots in spline to use in model
@@ -36,7 +38,7 @@ mpf_subjects_to_exclude_time2 = [] #[105, 117, 119, 201, 209, 215, 301, 306, 319
 
 file_with_demographics = 'Adol_CortThick_data.csv'
 
-run_make_norm_model = 1
+run_make_norm_model = 0
 
 working_dir = os.getcwd()
 
@@ -57,23 +59,24 @@ if run_make_norm_model:
     Z_time2_md.reset_index(inplace=True)
     Z_time2_mpf.reset_index(inplace=True)
 
-    plot_and_compute_zcores_by_gender(Z_time2_fa, 'fa', roi_ids, working_dir, n_splits)
     Z_time2_fa.to_csv(f'{working_dir}/Z_time2_fa_{n_splits}_splits.csv')
-
-    # roi_ids_md = roi_ids.copy()
-    # roi_ids_md = [s.replace('FA', 'MD') for s in roi_ids]
-    plot_and_compute_zcores_by_gender(Z_time2_md, 'md', roi_ids, working_dir, n_splits)
     Z_time2_md.to_csv(f'{working_dir}/Z_time2_md_{n_splits}_splits.csv')
-
-    roi_ids_mpf = roi_ids.copy()
-
-    roi_ids_mpf = [reg for reg in roi_ids_mpf if 'Uncinate' not in reg]
-
-    # roi_ids_mpf = [s.replace('FA', 'MPF') for s in roi_ids_mpf]
-    plot_and_compute_zcores_by_gender(Z_time2_mpf, 'mpf', roi_ids_mpf, working_dir, n_splits)
     Z_time2_mpf.to_csv(f'{working_dir}/Z_time2_mpf_{n_splits}_splits.csv')
+    write_list_to_file(roi_ids, f'{working_dir}/roi_ids.txt')
 
-    plt.show()
+Z_time2_fa = pd.read_csv(f'{working_dir}/Z_time2_fa_{n_splits}_splits.csv', usecols=lambda col: col != "Unnamed: 0")
+Z_time2_md = pd.read_csv(f'{working_dir}/Z_time2_md_{n_splits}_splits.csv', usecols=lambda col: col != "Unnamed: 0")
+Z_time2_mpf = pd.read_csv(f'{working_dir}/Z_time2_mpf_{n_splits}_splits.csv', usecols=lambda col: col != "Unnamed: 0")
+roi_ids = pd.read_csv(f'{working_dir}/roi_ids.txt', header = None)
+roi_ids = roi_ids.iloc[:,0].tolist()
 
-    mystop=1
-    #
+plot_and_compute_zcores_by_gender(Z_time2_fa, 'fa', roi_ids, working_dir, n_splits)
+plot_and_compute_zcores_by_gender(Z_time2_md, 'md', roi_ids, working_dir, n_splits)
+roi_ids_mpf = roi_ids.copy()
+roi_ids_mpf = [reg for reg in roi_ids_mpf if 'Uncinate' not in reg]
+plot_and_compute_zcores_by_gender(Z_time2_mpf, 'mpf', roi_ids_mpf, working_dir, n_splits)
+
+plt.show()
+
+mystop=1
+

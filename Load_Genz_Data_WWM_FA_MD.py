@@ -71,8 +71,9 @@ def load_genz_data_wm_fa_md(path, fa_braindatafilename_v1, fa_braindatafilename_
     # create a list of all the region columns to run a normative model for
     columns_to_exclude = ['subject', 'visit', 'gender', 'agemonths', 'agedays', 'agegroup', 'Age']
     roi_ids = [col for col in fa_all_data.columns if col not in columns_to_exclude]
-    tmp_reg_to_keep = ['Left Corticospinal_21', 'Right Corticospinal_21', 'Left Uncinate_21', 'Right Uncinate_21']
-    roi_ids = [region for region in roi_ids if region in tmp_reg_to_keep]
+
+    tmp_reg_to_keep = ['Left Thalamic Radiation', 'Right Thalamic Radiation']
+    roi_ids = [region for region in roi_ids if any(sub in region for sub in tmp_reg_to_keep)]
 
     fa_all_data.rename(columns={'subject': 'participant_id', 'gender':'sex', 'agegroup': 'age'}, inplace=True)
     md_all_data.rename(columns={'subject': 'participant_id', 'gender': 'sex', 'agegroup': 'age'}, inplace=True)

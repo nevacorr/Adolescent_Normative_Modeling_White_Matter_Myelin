@@ -10,6 +10,7 @@ import seaborn as sns
 import scipy.stats as stats
 import math
 from Utility_Functions import write_list_to_file
+from plot_tract_sig_profiles import plot_tract_sig_profiles
 
 def one_plot(ax, ptitle, ptitleB, Z_male_region, Z_female_region, binedges, zlim, nokde):
     if nokde==1:
@@ -244,6 +245,15 @@ def plot_and_compute_zcores_by_gender(Z_time2, struct_var, roi_ids, working_dir,
     binedges = np.linspace(binmin-0.5, binmax+0.5, 24)
 
     nokde=1
-    plot_by_gender_no_kde(struct_var, Z_female, Z_male, roi_ids, reject_f, reject_m, pvals_corrected_f,
-                          pvals_corrected_m, binedges, nokde, working_dir, nsplits)
+    #plot_by_gender_no_kde(struct_var, Z_female, Z_male, roi_ids, reject_f, reject_m, pvals_corrected_f,
+     #                     pvals_corrected_m, binedges, nokde, working_dir, nsplits)
+
+    zmean_f = {}
+    zmean_m = {}
+
+    for r in roi_ids:
+        zmean_f[r] = np.mean(Z_female[r])
+        zmean_m[r] = np.mean(Z_male[r])
+
+    plot_tract_sig_profiles(struct_var, zmean_f, reject_f, working_dir, nsplits, roi_ids)
 
