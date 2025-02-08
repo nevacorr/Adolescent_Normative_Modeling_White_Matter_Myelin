@@ -38,7 +38,7 @@ mpf_subjects_to_exclude_time2 = [] #[105, 117, 119, 201, 209, 215, 301, 306, 319
 
 file_with_demographics = 'Adol_CortThick_data.csv'
 
-run_make_norm_model = 1
+run_make_norm_model = 0
 
 working_dir = os.getcwd()
 

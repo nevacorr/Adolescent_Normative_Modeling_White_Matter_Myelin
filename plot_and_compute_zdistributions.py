@@ -225,6 +225,13 @@ def plot_and_compute_zcores_by_gender(Z_time2, struct_var, roi_ids, working_dir,
     reject_f, pvals_corrected_f, a1_f, a2_f = smt.multipletests(p_values_f, alpha=0.05, method='fdr_bh')
     reject_m, pvals_corrected_m, a1_m, a2_m = smt.multipletests(p_values_m, alpha=0.05, method='fdr_bh')
 
+    pvalues = np.array(p_values_f)  # Ensure it's a NumPy array
+    reject_f = (pvalues < 0.0500000).astype(int)
+    pvalues = np.array(p_values_m)  # Ensure it's a NumPy array
+    reject_m = (pvalues < 0.0500000).astype(int)
+    pvals_corrected_f = p_values_f
+    pvals_corrected_m = p_values_m
+
     #write regions where reject_f is True to file
     regions_reject_f = [roi_id for roi_id, reject_value in zip(roi_ids, reject_f) if reject_value]
     regions_reject_m = [roi_id for roi_id, reject_value in zip(roi_ids, reject_m) if reject_value]
@@ -255,5 +262,6 @@ def plot_and_compute_zcores_by_gender(Z_time2, struct_var, roi_ids, working_dir,
         zmean_f[r] = np.mean(Z_female[r])
         zmean_m[r] = np.mean(Z_male[r])
 
-    plot_tract_sig_profiles(struct_var, zmean_f, reject_f, working_dir, nsplits, roi_ids)
+    plot_tract_sig_profiles(struct_var, zmean_f, reject_f, working_dir, nsplits, roi_ids, 'female')
+    plot_tract_sig_profiles(struct_var, zmean_m, reject_m, working_dir, nsplits, roi_ids, 'male')
 

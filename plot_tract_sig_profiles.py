@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plot_tract_sig_profiles(struct_var, zmean, reject, working_dir, nsplits, roi_ids):
+def plot_tract_sig_profiles(struct_var, zmean, reject, working_dir, nsplits, roi_ids, gender):
 
 
     # Convert dictionary values to a NumPy array for plotting
@@ -43,12 +43,13 @@ def plot_tract_sig_profiles(struct_var, zmean, reject, working_dir, nsplits, roi
         tract_matrix = np.array(tract_data[tract])
         cax = ax.imshow(tract_matrix, cmap="viridis", aspect="auto", vmin=vmin, vmax=vmax)
 
-        ax.set_title(tract)
+        ax.set_title(f'{tract}  {struct_var} {gender}')
         ax.set_xlabel("Node")
 
         # Remove y-axis tick marks and labels
         ax.set_yticks([])
         ax.set_yticklabels([])
+
 
     fig.colorbar(cax, ax=axes, orientation="vertical", label="Value")
 
