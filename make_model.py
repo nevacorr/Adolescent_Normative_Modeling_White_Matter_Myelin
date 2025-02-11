@@ -169,9 +169,9 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
 
         Z2_all_splits = pd.concat([Z2_all_splits, Z_time2], ignore_index=True)
 
-        Z2_all_splits.to_csv(f'{working_dir}/Z_time2_{struct_var_metric}_{n_splits}_splits.csv')
+        # Z2_all_splits.to_csv(f'{working_dir}/Z_time2_{struct_var_metric}_{n_splits}_splits.csv')
 
-        write_list_to_file(roi_ids, f'{working_dir}/roi_ids.txt')
+        # write_list_to_file(roi_ids, f'{working_dir}/roi_ids.txt')
 
     # Z2_all_splits = Z2_all_splits.groupby(by=['participant_id']).mean().drop(columns=['split'])
     # Z2_all_splits = Z2_all_splits.groupby(by=['participant_id']).mean()
