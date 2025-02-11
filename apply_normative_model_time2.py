@@ -121,7 +121,7 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
         except:
             yhat_te = np.nan
             s2_te = np.nan
-            Z = np.nan
+            Z = np.full((X_test.shape[0], 1), np.nan)
 
         ind=0
         if Z_time2.shape[0] == Z.shape[0]:
