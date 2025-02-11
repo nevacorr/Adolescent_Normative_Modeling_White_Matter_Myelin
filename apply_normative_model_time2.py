@@ -110,17 +110,6 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
             # make predictions
             yhat_te, s2_te, Z = predict(cov_file_te, respfile=resp_file_te, alg='blr', model_path=model_dir)
 
-            ind=0
-            if Z_time2.shape[0] == Z.shape[0]:
-                Z_time2[roi] = Z
-            else:
-                for subj in range(Z_time2.shape[0]):
-                    if subj in y_test_nan_index[roi]:
-                        Z_time2.loc[subj, roi] = np.nan
-                    else:
-                        Z_time2.loc[subj,roi] = Z[ind]
-                        ind += 1
-
             #create dummy design matrices
             dummy_cov_file_path_female, dummy_cov_file_path_male= \
                 create_dummy_design_matrix(struct_var, agemin, agemax, cov_file_te, spline_order, spline_knots,
@@ -134,6 +123,16 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
             s2_te = np.nan
             Z = np.nan
 
+        ind=0
+        if Z_time2.shape[0] == Z.shape[0]:
+            Z_time2[roi] = Z
+        else:
+            for subj in range(Z_time2.shape[0]):
+                if subj in y_test_nan_index[roi]:
+                    Z_time2.loc[subj, roi] = np.nan
+                else:
+                    Z_time2.loc[subj,roi] = Z[ind]
+                    ind += 1
 
     Z_time2.to_csv('{}/{}/{}/Z_scores_by_region_postcovid_testset_Final.txt'
                                 .format(working_dir, dirpredict, struct_var), index=False)
