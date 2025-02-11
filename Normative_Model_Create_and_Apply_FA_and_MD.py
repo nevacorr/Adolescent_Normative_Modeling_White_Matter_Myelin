@@ -38,7 +38,7 @@ mpf_subjects_to_exclude_time2 = [] #[105, 117, 119, 201, 209, 215, 301, 306, 319
 
 file_with_demographics = 'Adol_CortThick_data.csv'
 
-run_make_norm_model = 0
+run_make_norm_model = 1
 
 working_dir = os.getcwd()
 
@@ -59,10 +59,10 @@ if run_make_norm_model:
     Z_time2_md.reset_index(inplace=True)
     Z_time2_mpf.reset_index(inplace=True)
 
-    Z_time2_fa.to_csv(f'{working_dir}/Z_time2_fa_{n_splits}_splits.csv')
-    Z_time2_md.to_csv(f'{working_dir}/Z_time2_md_{n_splits}_splits.csv')
-    Z_time2_mpf.to_csv(f'{working_dir}/Z_time2_mpf_{n_splits}_splits.csv')
-    write_list_to_file(roi_ids, f'{working_dir}/roi_ids.txt')
+    # Z_time2_fa.to_csv(f'{working_dir}/Z_time2_fa_{n_splits}_splits.csv')
+    # Z_time2_md.to_csv(f'{working_dir}/Z_time2_md_{n_splits}_splits.csv')
+    # Z_time2_mpf.to_csv(f'{working_dir}/Z_time2_mpf_{n_splits}_splits.csv')
+    # write_list_to_file(roi_ids, f'{working_dir}/roi_ids.txt')
 
 Z_time2_fa = pd.read_csv(f'{working_dir}/Z_time2_fa_{n_splits}_splits.csv', usecols=lambda col: col != "Unnamed: 0")
 Z_time2_md = pd.read_csv(f'{working_dir}/Z_time2_md_{n_splits}_splits.csv', usecols=lambda col: col != "Unnamed: 0")
