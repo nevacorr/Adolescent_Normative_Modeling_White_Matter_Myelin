@@ -27,11 +27,11 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
     Z2_all_splits = pd.DataFrame()
 
     total = len(roi_ids)*n_splits  # Get total number of models to be created for this modality
-    tcounter = 1  # Initialize counter
+    tcounter = 0  # Initialize counter
 
     for split in range(n_splits):
 
-        print(f"SPLIT NUMBER = {split}/{n_splits}")
+        print(f"SPLIT NUMBER = {split+1}/{n_splits}")
         start_time = time.time()  # Record start time
 
         subjects_train = train_set_array[split, :]
@@ -136,15 +136,15 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
 
         roicounter = 0
         for roi in roi_ids:
-            print(f"{struct_var_metric} SPLIT NUMBER = {split}/{n_splits}")
+            print(f"{struct_var_metric} SPLIT NUMBER = {split+1}/{n_splits}")
             print('Running ROI:', roi)
-            tcounter += 1  # Increment counter
-            roicounter += 1
             current_time = time.time()  # Record end time
             elapsed_time = (current_time - start_time) / 60.0  # Calculate elapsed time in minutes
-            print(f"Models created for {struct_var_metric}:  {roicounter}/{len(roi_ids)} ROIs")
-            print(f"Number of times makemodel has been run across all splits = {tcounter}/{total}")
-            print(f"Elapsed time for split {split} for {struct_var_metric} is {elapsed_time:.2f} minutes")
+            print(f"Models created for {struct_var_metric}:  {roicounter+1}/{len(roi_ids)} ROIs")
+            print(f"Number of times makemodel has been run across all splits = {tcounter+1}/{total}")
+            print(f"Elapsed time for split {split+1} for {struct_var_metric} is {elapsed_time:.2f} minutes")
+            tcounter += 1  # Increment counter
+            roicounter += 1
 
             print('Running ROI:', roi)
             roi_dir = os.path.join(data_dir, roi)
@@ -194,7 +194,7 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
         end_time = time.time()  # Record end time
         elapsed_time = (end_time - start_time) / 60.0  # Calculate elapsed time in minutes
 
-        print(f"Elapsed time for split {split} for {struct_var_metric} is {elapsed_time:.2f} minutes")
+        print(f"Elapsed time for split {split+1} for {struct_var_metric} is {elapsed_time:.2f} minutes")
 
     # Z2_all_splits = Z2_all_splits.groupby(by=['participant_id']).mean().drop(columns=['split'])
     # Z2_all_splits = Z2_all_splits.groupby(by=['participant_id']).mean()
