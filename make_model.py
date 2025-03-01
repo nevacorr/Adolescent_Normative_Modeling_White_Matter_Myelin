@@ -140,8 +140,11 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
             print('Running ROI:', roi)
             tcounter += 1  # Increment counter
             roicounter += 1
+            current_time = time.time()  # Record end time
+            elapsed_time = (current_time - start_time) / 60.0  # Calculate elapsed time in minutes
             print(f"Models created for {struct_var_metric}:  {roicounter}/{len(roi_ids)} ROIs")
             print(f"Number of times makemodel has been run across all splits = {tcounter}/{total}")
+            print(f"Elapsed time for split {split} for {struct_var_metric} is {elapsed_time:.2f} minutes")
 
             print('Running ROI:', roi)
             roi_dir = os.path.join(data_dir, roi)
