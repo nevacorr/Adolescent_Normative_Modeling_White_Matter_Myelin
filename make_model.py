@@ -3,6 +3,7 @@ import pandas as pd
 import os
 import shutil
 import time
+import gc
 from numpy.core.defchararray import capitalize
 from pcntoolkit.normative import estimate, evaluate
 from plot_num_subjs import plot_num_subjs, plot_num_subjs_one_subject
@@ -195,6 +196,8 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
         elapsed_time = (end_time - start_time) / 60.0  # Calculate elapsed time in minutes
 
         print(f"Elapsed time for split {split+1} for {struct_var_metric} is {elapsed_time:.2f} minutes")
+
+        gc.collect()  # Force garbage collection
 
     # Z2_all_splits = Z2_all_splits.groupby(by=['participant_id']).mean().drop(columns=['split'])
     # Z2_all_splits = Z2_all_splits.groupby(by=['participant_id']).mean()
