@@ -136,7 +136,7 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
 
         for roi in roi_ids:
             print(f"SPLIT NUMBER = {split}/{n_splits}")
-            print(f"{i}/{total}: {roi}")
+            print(f"Models created: {i}/{total}: {roi*n_splits}")
             i += 1  # Increment counter
 
             print('Running ROI:', roi)

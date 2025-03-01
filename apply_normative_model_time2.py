@@ -51,6 +51,9 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
     ##########
     y_test_nan_index = {}
 
+    total = len(roi_ids)  # Get total number of ROIs
+    i = 1  # Initialize counter
+
     for c in y_test.columns:
 
         y_test_nan_index[c] = y_test[y_test[c].isna()].index.to_list()
@@ -97,6 +100,9 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
     for roi in roi_ids:
         print(f"SPLIT NUMBER = {split}/{n_splits}")
         print('Running ROI:', roi)
+        print(f"Models applied: {i}/{total}: {roi * n_splits}")
+        i += 1  # Increment counter
+
         roi_dir = os.path.join(predict_files_dir, roi)
         model_dir = os.path.join(training_dir, roi, 'Models')
         os.chdir(roi_dir)
