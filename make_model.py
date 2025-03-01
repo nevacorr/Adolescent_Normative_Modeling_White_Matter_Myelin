@@ -26,8 +26,8 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
 
     Z2_all_splits = pd.DataFrame()
 
-    total = len(roi_ids)  # Get total number of ROIs
-    i = 1  # Initialize counter
+    total = len(roi_ids)*n_splits  # Get total number of models to be created for this modality
+    tcounter = 1  # Initialize counter
 
     for split in range(n_splits):
 
@@ -134,10 +134,14 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
 
         # Loop through ROIs
 
+        roicounter = 0
         for roi in roi_ids:
             print(f"{struct_var_metric} SPLIT NUMBER = {split}/{n_splits}")
-            print(f"Models created for {struct_var_metric}: {i}/{total}: {roi*n_splits}")
-            i += 1  # Increment counter
+            print('Running ROI:', roi)
+            tcounter += 1  # Increment counter
+            roicounter += 1
+            print(f"Models applied for {struct_var_metric}:  {roicounter}/{len(roi_ids)} ROIs")
+            print(f"Number of times makemodel has been run across all splits = {tcounter}/{total}")
 
             print('Running ROI:', roi)
             roi_dir = os.path.join(data_dir, roi)

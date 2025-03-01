@@ -51,8 +51,9 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
     ##########
     y_test_nan_index = {}
 
-    total = len(roi_ids)  # Get total number of ROIs
-    i = 1  # Initialize counter
+    total = len(roi_ids) * n_splits # total number of models to be applied for this modality
+
+    tcounter = 1  # Initialize counter
 
     for c in y_test.columns:
 
@@ -97,11 +98,15 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
     #create design matrices for all regions and save files in respective directories
     create_design_matrix('test', agemin, agemax, spline_order, spline_knots, roi_ids, predict_files_dir)
 
+    roicounter = 0
+
     for roi in roi_ids:
         print(f"SPLIT NUMBER = {split}/{n_splits}")
         print('Running ROI:', roi)
-        print(f"Models applied for {struct_var}: {i}/{total}: {roi * n_splits}")
-        i += 1  # Increment counter
+        tcounter += 1  # Increment counter
+        roicounter += 1
+        print(f"Models applied for {struct_var}:  {roicounter}/{len(roi_ids)}")
+        print(f"Number of times applymodel has been run for this split = {tcounter}")
 
         roi_dir = os.path.join(predict_files_dir, roi)
         model_dir = os.path.join(training_dir, roi, 'Models')
