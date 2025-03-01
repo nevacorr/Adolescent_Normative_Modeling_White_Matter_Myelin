@@ -12,7 +12,7 @@ import shutil
 from normative_edited import predict
 
 def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
-                                working_dir, all_data_v2, roi_ids, dirdata, dirpredict):
+                                working_dir, all_data_v2, roi_ids, dirdata, dirpredict, split, n_splits):
 
     ######################## Apply Normative Model to Post-Covid Data ############################
 
@@ -95,6 +95,7 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
     create_design_matrix('test', agemin, agemax, spline_order, spline_knots, roi_ids, predict_files_dir)
 
     for roi in roi_ids:
+        print(f"SPLIT NUMBER = {split}/{n_splits}")
         print('Running ROI:', roi)
         roi_dir = os.path.join(predict_files_dir, roi)
         model_dir = os.path.join(training_dir, roi, 'Models')
@@ -138,6 +139,8 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
                                 .format(working_dir, dirpredict, struct_var), index=False)
 
     plt.show()
+
+    print(f"finished SPLIT NUMBER = {split}/{n_splits}")
 
     return Z_time2
 

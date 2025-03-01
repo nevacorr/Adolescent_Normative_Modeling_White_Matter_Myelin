@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import os
 import shutil
+import time
 from numpy.core.defchararray import capitalize
 from pcntoolkit.normative import estimate, evaluate
 from plot_num_subjs import plot_num_subjs, plot_num_subjs_one_subject
@@ -25,7 +26,13 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
 
     Z2_all_splits = pd.DataFrame()
 
+    total = len(roi_ids)  # Get total number of ROIs
+    i = 1  # Initialize counter
+
     for split in range(n_splits):
+
+        print(f"SPLIT NUMBER = {split}/{n_splits}")
+        start_time = time.time()  # Record start time
 
         subjects_train = train_set_array[split, :]
         subjects_test = test_set_array[split, :]
@@ -128,6 +135,10 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
         # Loop through ROIs
 
         for roi in roi_ids:
+            print(f"SPLIT NUMBER = {split}/{n_splits}")
+            print(f"{i}/{total}: {roi}")
+            i += 1  # Increment counter
+
             print('Running ROI:', roi)
             roi_dir = os.path.join(data_dir, roi)
             model_dir = os.path.join(data_dir, roi, 'Models')
@@ -163,15 +174,20 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
                 metrics_tr = np.nan
 
         Z_time2 = apply_normative_model_time2(struct_var_metric, show_plots, show_nsubject_plots, spline_order,
-                                    spline_knots, working_dir, all_data_v2, roi_ids, dirdata, dirpredict)
+                                    spline_knots, working_dir, all_data_v2, roi_ids, dirdata, dirpredict, split, n_splits)
 
         Z_time2['split'] = split
 
         Z2_all_splits = pd.concat([Z2_all_splits, Z_time2], ignore_index=True)
 
-        # Z2_all_splits.to_csv(f'{working_dir}/Z_time2_{struct_var_metric}_{n_splits}_splits.csv')
+        Z2_all_splits.to_csv(f'{working_dir}/Z_time2_{struct_var_metric}_{n_splits}_splits.csv')
 
-        # write_list_to_file(roi_ids, f'{working_dir}/roi_ids.txt')
+        write_list_to_file(roi_ids, f'{working_dir}/roi_ids.txt')
+
+        end_time = time.time()  # Record end time
+        elapsed_time = (end_time - start_time) / 60.0  # Calculate elapsed time in minutes
+
+        print(f"Elapsed time for split {split} for {struct_var_metric} is {elapsed_time:.2f} minutes")
 
     # Z2_all_splits = Z2_all_splits.groupby(by=['participant_id']).mean().drop(columns=['split'])
     # Z2_all_splits = Z2_all_splits.groupby(by=['participant_id']).mean()

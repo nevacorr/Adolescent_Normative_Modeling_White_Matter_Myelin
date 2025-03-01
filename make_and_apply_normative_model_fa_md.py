@@ -74,8 +74,12 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
     Z2_all_splits_fa = make_model(fa_all_data_v1, fa_all_data_v2, 'fa', n_splits, train_set_array, test_set_array,
                show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids)
 
+    Z2_all_splits_fa.to_csv('{}/Z2_all_splits_fa', working_dir)
+
     Z2_all_splits_md = make_model(md_all_data_v1, md_all_data_v2, 'md', n_splits, train_set_array, test_set_array,
                show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids)
+
+    Z2_all_splits_md.to_csv('{}/Z2_all_splits_md', working_dir)
 
     roi_ids_tmp = roi_ids.copy()
 
@@ -83,6 +87,8 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
     roi_ids_tmp = [region for region in roi_ids if not any(substring in region for substring in reg_to_remove)]
     Z2_all_splits_mpf = make_model(mpf_all_data_v1, mpf_all_data_v2, 'mpf', n_splits, train_set_array, test_set_array,
                show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids_tmp)
+
+    Z2_all_splits_mpf.to_csv('{}/Z2_all_splits_mpf', working_dir)
 
     return Z2_all_splits_fa, Z2_all_splits_md, Z2_all_splits_mpf, roi_ids
 
