@@ -140,7 +140,7 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
             print('Running ROI:', roi)
             tcounter += 1  # Increment counter
             roicounter += 1
-            print(f"Models applied for {struct_var_metric}:  {roicounter}/{len(roi_ids)} ROIs")
+            print(f"Models created for {struct_var_metric}:  {roicounter}/{len(roi_ids)} ROIs")
             print(f"Number of times makemodel has been run across all splits = {tcounter}/{total}")
 
             print('Running ROI:', roi)
