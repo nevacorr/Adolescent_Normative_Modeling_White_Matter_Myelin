@@ -100,7 +100,7 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
     for roi in roi_ids:
         print(f"SPLIT NUMBER = {split}/{n_splits}")
         print('Running ROI:', roi)
-        print(f"Models applied: {i}/{total}: {roi * n_splits}")
+        print(f"Models applied for {struct_var}: {i}/{total}: {roi * n_splits}")
         i += 1  # Increment counter
 
         roi_dir = os.path.join(predict_files_dir, roi)
