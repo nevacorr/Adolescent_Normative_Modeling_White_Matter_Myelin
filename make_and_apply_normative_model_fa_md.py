@@ -4,6 +4,7 @@ from sklearn.model_selection import StratifiedShuffleSplit
 from make_model import make_model
 from Utility_Functions import make_nm_directories
 from load_data_all import load_data_all
+import gc
 
 def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
                               raw_data_dir, working_dir, fa_datafilename_v1, fa_datafilename_v2, md_datafilename_v1,
@@ -76,10 +77,14 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
 
     Z2_all_splits_fa.to_csv('{}/Z2_all_splits_fa', working_dir)
 
+    gc.collect() # Force garbage collection
+
     Z2_all_splits_md = make_model(md_all_data_v1, md_all_data_v2, 'md', n_splits, train_set_array, test_set_array,
                show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids)
 
     Z2_all_splits_md.to_csv('{}/Z2_all_splits_md', working_dir)
+
+    gc.collect() # Force garbage collection
 
     roi_ids_tmp = roi_ids.copy()
 
