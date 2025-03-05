@@ -12,6 +12,65 @@ from Utility_Functions import create_dummy_design_matrix, plot_data_with_spline_
 from Utility_Functions import barplot_performance_values, plot_y_v_yhat, makenewdir, movefiles
 from Utility_Functions import write_ages_to_file, write_list_to_file
 from apply_normative_model_time2 import apply_normative_model_time2
+from multiprocessing import Pool
+
+def make_models_parallel(roi_ids, struct_var_metric, split, n_splits, start_time, tcounter, total, data_dir,
+                       agemin, agemax, spline_order, spline_knots, show_plots, working_dir, dirdata):
+
+    with Pool(16) as p:
+        return p.starmap(make_model_allrois, [
+            (roi, roi_ids, struct_var_metric, split, n_splits, start_time, tcounter, total, data_dir,
+                       agemin, agemax, spline_order, spline_knots, show_plots, working_dir, dirdata)
+                         for roi in roi_ids
+        ])
+
+def make_model_allrois(roi, roi_ids, struct_var_metric, split, n_splits, start_time, tcounter, total, data_dir,
+                       agemin, agemax, spline_order, spline_knots, show_plots, working_dir, dirdata):
+    roicounter = 0
+    print(f"{struct_var_metric} SPLIT NUMBER = {split + 1}/{n_splits}")
+    print('Running ROI:', roi)
+    current_time = time.time()  # Record end time
+    elapsed_time = (current_time - start_time) / 60.0  # Calculate elapsed time in minutes
+    print(f"Models created for {struct_var_metric}:  {roicounter + 1}/{len(roi_ids)} ROIs")
+    print(f"Number of times makemodel has been run across all splits = {tcounter + 1}/{total}")
+    print(f"Elapsed time for split {split + 1} for {struct_var_metric} is {elapsed_time:.2f} minutes")
+    tcounter += 1  # Increment counter
+    roicounter += 1
+
+    print('Running ROI:', roi)
+    roi_dir = os.path.join(data_dir, roi)
+    model_dir = os.path.join(data_dir, roi, 'Models')
+    os.chdir(roi_dir)
+
+    # configure the covariates to use. Change *_bspline_* to *_int_*
+    cov_file_tr = os.path.join(roi_dir, 'cov_bspline_tr.txt')
+
+    # load train response files
+    resp_file_tr = os.path.join(roi_dir, 'resp_tr.txt')
+
+    try:
+        # calculate a model based on the training data and apply to the train dataset. The purpose of
+        # running this function is to create and save the model, not to evaluate performance.
+        yhat_tr, s2_tr, nm, Z_tr, metrics_tr = estimate(cov_file_tr, resp_file_tr, testresp=resp_file_tr,
+                                                        testcov=cov_file_tr, alg='blr', optimizer='powell',
+                                                        savemodel=True, saveoutput=False, standardize=False)
+
+        # create dummy design matrices for visualizing model
+        dummy_cov_file_path_female, dummy_cov_file_path_male = \
+            create_dummy_design_matrix(struct_var_metric, agemin, agemax, cov_file_tr, spline_order, spline_knots,
+                                       working_dir)
+
+        # Compute splines and superimpose on data. Show on screen or save to file depending on show_plots value.
+        plot_data_with_spline('Training Data', struct_var_metric, cov_file_tr, resp_file_tr,
+                              dummy_cov_file_path_female,
+                              dummy_cov_file_path_male, model_dir, roi, show_plots, working_dir, dirdata)
+
+    except:
+        yhat_tr = np.nan
+        s2_tr = np.nan
+        nm = np.nan
+        Z_tr = np.nan
+        metrics_tr = np.nan
 
 def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, train_set_array, test_set_array,
                show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids):
@@ -133,53 +192,9 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
         # ●saveoutput=False: return the outputs directly rather than writing them to disk
         # ●standardize=False: do not standardize the covariates or response variable
 
-        # Loop through ROIs
-
-        roicounter = 0
-        for roi in roi_ids:
-            print(f"{struct_var_metric} SPLIT NUMBER = {split+1}/{n_splits}")
-            print('Running ROI:', roi)
-            current_time = time.time()  # Record end time
-            elapsed_time = (current_time - start_time) / 60.0  # Calculate elapsed time in minutes
-            print(f"Models created for {struct_var_metric}:  {roicounter+1}/{len(roi_ids)} ROIs")
-            print(f"Number of times makemodel has been run across all splits = {tcounter+1}/{total}")
-            print(f"Elapsed time for split {split+1} for {struct_var_metric} is {elapsed_time:.2f} minutes")
-            tcounter += 1  # Increment counter
-            roicounter += 1
-
-            print('Running ROI:', roi)
-            roi_dir = os.path.join(data_dir, roi)
-            model_dir = os.path.join(data_dir, roi, 'Models')
-            os.chdir(roi_dir)
-
-            # configure the covariates to use. Change *_bspline_* to *_int_*
-            cov_file_tr = os.path.join(roi_dir, 'cov_bspline_tr.txt')
-
-            # load train response files
-            resp_file_tr = os.path.join(roi_dir, 'resp_tr.txt')
-
-            try:
-                # calculate a model based on the training data and apply to the train dataset. The purpose of
-                # running this function is to create and save the model, not to evaluate performance.
-                yhat_tr, s2_tr, nm, Z_tr, metrics_tr = estimate(cov_file_tr, resp_file_tr, testresp=resp_file_tr,
-                                                                testcov=cov_file_tr, alg='blr', optimizer='powell',
-                                                                savemodel=True, saveoutput=False, standardize=False)
-
-                # create dummy design matrices for visualizing model
-                dummy_cov_file_path_female, dummy_cov_file_path_male = \
-                    create_dummy_design_matrix(struct_var_metric, agemin, agemax, cov_file_tr, spline_order, spline_knots,
-                                               working_dir)
-
-                # Compute splines and superimpose on data. Show on screen or save to file depending on show_plots value.
-                plot_data_with_spline('Training Data', struct_var_metric, cov_file_tr, resp_file_tr, dummy_cov_file_path_female,
-                                      dummy_cov_file_path_male, model_dir, roi, show_plots, working_dir, dirdata)
-
-            except:
-                yhat_tr = np.nan
-                s2_tr = np.nan
-                nm = np.nan
-                Z_tr = np.nan
-                metrics_tr = np.nan
+        # Loop through ROIs using parallel processing
+        make_models_parallel(roi_ids, struct_var_metric, split, n_splits, start_time, tcounter, total, data_dir,
+                             agemin, agemax, spline_order, spline_knots, show_plots, working_dir, dirdata)
 
         Z_time2 = apply_normative_model_time2(struct_var_metric, show_plots, show_nsubject_plots, spline_order,
                                     spline_knots, working_dir, all_data_v2, roi_ids, dirdata, dirpredict, split, n_splits)
