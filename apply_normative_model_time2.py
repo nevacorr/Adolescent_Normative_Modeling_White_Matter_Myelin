@@ -10,70 +10,9 @@ from Utility_Functions import plot_data_with_spline, create_design_matrix, read_
 from Utility_Functions import create_design_matrix_one_gender
 import shutil
 from normative_edited import predict
-from multiprocessing import Pool
 
-def apply_models_parallel(roi_ids, struct_var_metric, split, n_splits, data_dir, predict_dir,
-                       agemin, agemax, spline_order, spline_knots, show_plots, working_dir, dirdata, X_test,
-                          Z_time2, y_test_nan_index):
-
-    with Pool(16) as p:
-        results = p.starmap(apply_models_allrois, [
-            (roi, struct_var_metric, split, n_splits, data_dir, predict_dir,
-                       agemin, agemax, spline_order, spline_knots, show_plots, working_dir, dirdata, X_test,
-                        Z_time2, y_test_nan_index)
-                         for roi in roi_ids
-        ])
-    return results
-
-def apply_models_allrois(roi, struct_var, split, n_splits, training_dir, predict_files_dir,
-                       agemin, agemax, spline_order, spline_knots, show_plots, working_dir, dirdata,
-                         X_test, Z_time2, y_test_nan_index):
-
-    print(f"SPLIT NUMBER = {split + 1}/{n_splits}")
-    print('Running ROI:', roi)
-
-    roi_dir = os.path.join(predict_files_dir, roi)
-    model_dir = os.path.join(training_dir, roi, 'Models')
-    os.chdir(roi_dir)
-
-    # configure the covariates to use.
-    cov_file_te = os.path.join(roi_dir, 'cov_bspline_te.txt')
-
-    # load test response files
-    resp_file_te = os.path.join(roi_dir, 'resp_te.txt')
-
-    try:
-        # make predictions
-        yhat_te, s2_te, Z = predict(cov_file_te, respfile=resp_file_te, alg='blr', model_path=model_dir)
-
-        # create dummy design matrices
-        dummy_cov_file_path_female, dummy_cov_file_path_male = \
-            create_dummy_design_matrix(struct_var, agemin, agemax, cov_file_te, spline_order, spline_knots,
-                                       working_dir)
-
-        plot_data_with_spline('Postcovid (Test) Data ', struct_var, cov_file_te, resp_file_te,
-                              dummy_cov_file_path_female, dummy_cov_file_path_male, model_dir, roi,
-                              show_plots, working_dir, dirdata)
-    except:
-        yhat_te = np.nan
-        s2_te = np.nan
-        Z = np.full((X_test.shape[0], 1), np.nan)
-
-    ind = 0
-    if Z_time2.shape[0] == Z.shape[0]:
-        Z_time2[roi] = Z
-    else:
-        for subj in range(Z_time2.shape[0]):
-            if subj in y_test_nan_index[roi]:
-                Z_time2.loc[subj, roi] = np.nan
-            else:
-                Z_time2.loc[subj, roi] = Z[ind]
-                ind += 1
-
-    return Z_time2
-
-def apply_normative_model_time2(roi, roi_ids, struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
-                                working_dir, all_data_v2, dirdata, dirpredict, split, n_splits):
+def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
+                                working_dir, all_data_v2, roi_ids, dirdata, dirpredict, split, n_splits):
 
     ######################## Apply Normative Model to Post-Covid Data ############################
 
@@ -161,9 +100,51 @@ def apply_normative_model_time2(roi, roi_ids, struct_var, show_plots, show_nsubj
 
     roicounter = 0
 
-    Z_time2 = apply_models_parallel(roi_ids, struct_var, split, n_splits, dirdata, dirpredict,
-                              agemin, agemax, spline_order, spline_knots, show_plots, working_dir, dirdata, X_test,
-                              Z_time2, y_test_nan_index)
+    for roi in roi_ids:
+        print(f"SPLIT NUMBER = {split+1}/{n_splits}")
+        print('Running ROI:', roi)
+        print(f"Models applied for {struct_var}:  {roicounter + 1}/{len(roi_ids)}")
+        print(f"Number of times applymodel has been run for this split = {tcounter + 1}")
+        tcounter += 1  # Increment counter
+        roicounter += 1
+
+        roi_dir = os.path.join(predict_files_dir, roi)
+        model_dir = os.path.join(training_dir, roi, 'Models')
+        os.chdir(roi_dir)
+
+        # configure the covariates to use.
+        cov_file_te = os.path.join(roi_dir, 'cov_bspline_te.txt')
+
+        # load test response files
+        resp_file_te = os.path.join(roi_dir, 'resp_te.txt')
+
+        try:
+            # make predictions
+            yhat_te, s2_te, Z = predict(cov_file_te, respfile=resp_file_te, alg='blr', model_path=model_dir)
+
+            #create dummy design matrices
+            dummy_cov_file_path_female, dummy_cov_file_path_male= \
+                create_dummy_design_matrix(struct_var, agemin, agemax, cov_file_te, spline_order, spline_knots,
+                                                      working_dir)
+
+            plot_data_with_spline('Postcovid (Test) Data ', struct_var, cov_file_te, resp_file_te,
+                                                dummy_cov_file_path_female, dummy_cov_file_path_male, model_dir, roi,
+                                                show_plots, working_dir, dirdata)
+        except:
+            yhat_te = np.nan
+            s2_te = np.nan
+            Z = np.full((X_test.shape[0], 1), np.nan)
+
+        ind=0
+        if Z_time2.shape[0] == Z.shape[0]:
+            Z_time2[roi] = Z
+        else:
+            for subj in range(Z_time2.shape[0]):
+                if subj in y_test_nan_index[roi]:
+                    Z_time2.loc[subj, roi] = np.nan
+                else:
+                    Z_time2.loc[subj,roi] = Z[ind]
+                    ind += 1
 
     Z_time2.to_csv('{}/{}/{}/Z_scores_by_region_postcovid_testset_Final.txt'
                                 .format(working_dir, dirpredict, struct_var), index=False)
