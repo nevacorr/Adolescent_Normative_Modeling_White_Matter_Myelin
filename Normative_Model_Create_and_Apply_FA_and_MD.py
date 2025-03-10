@@ -16,7 +16,7 @@ import pandas as pd
 
 struct_var = 'fa_and_md_and_mpf'
 
-n_splits = 1   #Number of train/test splits
+n_splits = 100   #Number of train/test splits
 
 show_plots = 0          #set to 1 to show training and test data y vs yhat and spline fit plots.
 show_nsubject_plots = 0 #set to 1 to plot number of subjects used in analysis, for each age and gender
@@ -59,14 +59,14 @@ if run_make_norm_model:
     Z_time2_md.reset_index(inplace=True)
     Z_time2_mpf.reset_index(inplace=True)
 
-    Z_time2_fa.to_csv(f'{working_dir}/Z_time2_fa_{n_splits}_splits_averaged.csv')
-    Z_time2_md.to_csv(f'{working_dir}/Z_time2_md_{n_splits}_splits_averaged.csv')
-    Z_time2_mpf.to_csv(f'{working_dir}/Z_time2_mpf_{n_splits}_splits_averaged.csv')
+    Z_time2_fa.to_csv(f'{working_dir}/Z_time2_fa_{n_splits}_splits.csv')
+    Z_time2_md.to_csv(f'{working_dir}/Z_time2_md_{n_splits}_splits.csv')
+    Z_time2_mpf.to_csv(f'{working_dir}/Z_time2_mpf_{n_splits}_splits.csv')
     write_list_to_file(roi_ids, f'{working_dir}/roi_ids.txt')
 
-Z_time2_fa = pd.read_csv(f'{working_dir}/Z_time2_fa_{n_splits}_splits_averaged.csv', usecols=lambda col: col != "Unnamed: 0")
-Z_time2_md = pd.read_csv(f'{working_dir}/Z_time2_md_{n_splits}_splits_averaged.csv', usecols=lambda col: col != "Unnamed: 0")
-Z_time2_mpf = pd.read_csv(f'{working_dir}/Z_time2_mpf_{n_splits}_splits_averaged.csv', usecols=lambda col: col != "Unnamed: 0")
+Z_time2_fa = pd.read_csv(f'{working_dir}/Z_time2_fa_{n_splits}_splits.csv', usecols=lambda col: col != "Unnamed: 0")
+Z_time2_md = pd.read_csv(f'{working_dir}/Z_time2_md_{n_splits}_splits.csv', usecols=lambda col: col != "Unnamed: 0")
+Z_time2_mpf = pd.read_csv(f'{working_dir}/Z_time2_mpf_{n_splits}_splits.csv', usecols=lambda col: col != "Unnamed: 0")
 roi_ids = pd.read_csv(f'{working_dir}/roi_ids.txt', header = None)
 roi_ids = roi_ids.iloc[:,0].tolist()
 
