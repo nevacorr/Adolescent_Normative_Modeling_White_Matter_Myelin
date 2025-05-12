@@ -1,4 +1,7 @@
 
+# This program correlates Z scores for behavior with the FA, MD, or MPF at each  node on each tract for all subjects
+# at times 1 and times 2.
+
 from load_genz_tract_profile_data_no_avg import load_genz_tract_profile_data_noavg
 import pandas as pd
 import seaborn as sns
@@ -37,8 +40,8 @@ behav_zs = pd.read_csv('/home/toddr/neva/PycharmProjects/AdolNormativeModelingCO
 
 for visit in [1, 2]:
 
-    fa_datafile = f'genz_tract_profile_data/genzFA_tractProfiles_visit{visit}.csv'
-    md_datafile = f'genz_tract_profile_data/genzMD_tractProfiles_visit{visit}.csv'
+    fa_datafile = f'genz_tract_profile_data/genzFA_tractProfiles_visit{visit}.csv' # AFQ output data from Libby
+    md_datafile = f'genz_tract_profile_data/genzMD_tractProfiles_visit{visit}.csv' # AFQ output data from Libby
 
     data_fa = load_genz_tract_profile_data_noavg(visit, data_dir, fa_datafile)
     data_md = load_genz_tract_profile_data_noavg(visit, data_dir, md_datafile)
