@@ -14,6 +14,10 @@ from make_and_apply_normative_model_fa_md import make_and_apply_normative_model_
 from Utility_Functions import write_list_to_file
 import pandas as pd
 
+plt.ioff()  # Disable interactive mode
+plt.switch_backend("Agg")  # Use a non-Tkinter backend 
+
+
 struct_var = 'fa_and_md_and_mpf'
 
 n_splits = 100   #Number of train/test splits
@@ -53,7 +57,7 @@ if run_make_norm_model:
 
     tmp = Z_time2_fa.groupby(by=['participant_id'])
     Z_time2_fa = Z_time2_fa.groupby(by=['participant_id']).mean().drop(columns=['split'])
-    Z_time2_md = Z_time2_md.groupby(by=['participant_id']).mean().drop(columns=['split'])
+    Z_time2_md =     Z_time2_md.groupby(by=['participant_id']).mean().drop(columns=['split'])
     Z_time2_mpf = Z_time2_mpf.groupby(by=['participant_id']).mean().drop(columns=['split'])
     Z_time2_fa.reset_index(inplace=True)
     Z_time2_md.reset_index(inplace=True)

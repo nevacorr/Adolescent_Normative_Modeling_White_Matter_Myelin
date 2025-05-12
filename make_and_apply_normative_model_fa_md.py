@@ -72,10 +72,10 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
     fname_test = '{}/visit1_subjects_test_sets_{}_splits_{}.txt'.format(working_dir, n_splits, struct_var)
     np.save(fname_test,test_set_array)
 
-    # Z2_all_splits_fa = make_model(fa_all_data_v1, fa_all_data_v2, 'fa', n_splits, train_set_array, test_set_array,
-    #            show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids)
+    Z2_all_splits_fa = make_model(fa_all_data_v1, fa_all_data_v2, 'fa', n_splits, train_set_array, test_set_array,
+               show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids)
 
-    # Z2_all_splits_fa.to_csv('{}/Z2_all_splits_fa.csv', working_dir)
+    Z2_all_splits_fa.to_csv(f'{working_dir}/Z2_all_splits_fa.csv')
 
     Z2_all_splits_fa = []
 
@@ -84,7 +84,9 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
     Z2_all_splits_md = make_model(md_all_data_v1, md_all_data_v2, 'md', n_splits, train_set_array, test_set_array,
                show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids)
 
-    Z2_all_splits_md.to_csv('{}/Z2_all_splits_md.csv', working_dir)
+    Z2_all_splits_md.to_csv(f'{working_dir}/Z2_all_splits_md.csv')
+
+    Z2_all_splits_md = []
 
     gc.collect() # Force garbage collection
 
@@ -95,7 +97,7 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
     Z2_all_splits_mpf = make_model(mpf_all_data_v1, mpf_all_data_v2, 'mpf', n_splits, train_set_array, test_set_array,
                show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids_tmp)
 
-    Z2_all_splits_mpf.to_csv('{}/Z2_all_splits_mpf.csv', working_dir)
+    Z2_all_splits_mpf.to_csv(f'{working_dir}/Z2_all_splits_mpf.csv')
 
     return Z2_all_splits_fa, Z2_all_splits_md, Z2_all_splits_mpf, roi_ids
 
