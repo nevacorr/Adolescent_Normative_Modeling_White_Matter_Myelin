@@ -27,17 +27,17 @@ elif diffusion_var == 'md':
 dwi_zs = dwi_zs.drop(columns=['split'])
 dwi_zs = dwi_zs.groupby('participant_id', as_index=False).mean()
 
-# Define behaviors and brain regions of interest
-behaviors_of_interest = ['participant_id', 'CDImean', 'RSQanxiety', 'RSQanger', 'StateAnxiety', 'TraitAnxiety', 'FlankerSU', 'DCSU']
-brain_regions_of_interest = dwi_zs.columns.tolist()
-
 # Remove rows where participant_id is odd
 # behav_zs = behav_zs[behav_zs['participant_id'] % 2 == 0]
 
-# Remove any behaviors or regions that are not of interest from dataframes
-behav_zs.drop(columns = behav_zs.columns.difference(behaviors_of_interest), inplace=True)
-dwi_zs.drop(columns = dwi_zs.columns.difference(brain_regions_of_interest), inplace=True)
-dwi_zs.drop(columns = dwi_zs.columns.difference(brain_regions_of_interest), inplace=True)
+brain_regions_of_interest = ['Arcuate', 'IFOF', 'ILF', 'Thalamic', 'Callosum', 'Corticospinal']
+behaviors_of_interest = ['Vocab', 'Anxiety', 'CDI', 'anxiety', 'SU', 'anger']
+
+# Keep only behavior columns that contain substrings from behaviors_of_interest, plus 'participant_id'
+behav_zs = behav_zs[[col for col in behav_zs.columns if any(sub in col for sub in behaviors_of_interest) or col == 'participant_id']]
+
+# Keep only DWI columns that contain substrings from brain_regions_of_interest, plus 'participant_id'
+dwi_zs = dwi_zs[[col for col in dwi_zs.columns if any(sub in col for sub in brain_regions_of_interest) or col == 'participant_id']]
 
 # Merge behavior and brain data by participant
 combined_df = behav_zs.merge(dwi_zs, on='participant_id')
@@ -45,13 +45,25 @@ combined_df = behav_zs.merge(dwi_zs, on='participant_id')
 # Remove all rows that are missing values
 combined_df = combined_df.dropna(axis=0)
 
-# Remove participant ID column
-behaviors_of_interest.remove('participant_id')
-brain_regions_of_interest.remove('participant_id')
+columns_to_keep = brain_regions_of_interest + behaviors_of_interest
+
+# Create a list of columns to keep by filtering out the ones we don't need
+columns_to_keep = [
+    col for col in combined_df.columns if any(sub in col for sub in columns_to_keep)
+]
+
+# Reassign the DataFrame with the filtered columns
+combined_df = combined_df[columns_to_keep]
+
+# Expand behavior columns based on substrings
+expanded_behaviors = [col for col in combined_df.columns if any(sub in col for sub in behaviors_of_interest)]
+
+# Expand brain region columns based on substrings
+expanded_brain_regions = [col for col in combined_df.columns if any(sub in col for sub in brain_regions_of_interest)]
 
 # Calculate correlations and p-values
 results = []
-for col1, col2 in product(behaviors_of_interest, brain_regions_of_interest):
+for col1, col2 in product(expanded_behaviors, expanded_brain_regions):
     corr, p_value = pearsonr(combined_df[col1], combined_df[col2])  # Compute correlation and p-value
     results.append({'Column1': col1, 'Column2': col2, 'Correlation': corr, 'p_value': p_value})
 
@@ -62,10 +74,13 @@ results_df = pd.DataFrame(results)
 _, pvals_corrected, _, _ = multipletests(results_df['p_value'], alpha=0.05, method='fdr_bh')
 
 # Add corrected p-values to the DataFrame
-results_df['p_value_corrected'] = pvals_corrected
+# results_df['p_value_corrected'] = pvals_corrected
+results_df['p_value_corrected'] = results_df['p_value']
 
 # Determine significance after FDR correction
 results_df['Significant'] = results_df['p_value_corrected'] < 0.05
+
+a_filtered_df = results_df[results_df['Significant'] == True]
 
 # Define a function that plots 2 columns as scatter plot
 def plot_scatter(df, col1name, col2name):
