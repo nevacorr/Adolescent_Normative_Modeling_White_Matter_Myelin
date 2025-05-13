@@ -30,8 +30,8 @@ dwi_zs = dwi_zs.groupby('participant_id', as_index=False).mean()
 # Remove rows where participant_id is odd
 # behav_zs = behav_zs[behav_zs['participant_id'] % 2 == 0]
 
-brain_regions_of_interest = ['Arcuate', 'IFOF', 'ILF', 'Thalamic', 'Callosum', 'Corticospinal']
-behaviors_of_interest = ['Vocab', 'Anxiety', 'CDI', 'anxiety', 'SU', 'anger']
+brain_regions_of_interest = ['Minor' ]
+behaviors_of_interest = ['SU']
 
 # Keep only behavior columns that contain substrings from behaviors_of_interest, plus 'participant_id'
 behav_zs = behav_zs[[col for col in behav_zs.columns if any(sub in col for sub in behaviors_of_interest) or col == 'participant_id']]
@@ -74,9 +74,9 @@ results_df = pd.DataFrame(results)
 _, pvals_corrected, _, _ = multipletests(results_df['p_value'], alpha=0.05, method='fdr_bh')
 
 # Add corrected p-values to the DataFrame
-# results_df['p_value_corrected'] = pvals_corrected
-results_df['p_value_corrected'] = results_df['p_value']
-
+results_df['p_value_corrected'] = pvals_corrected
+# results_df['p_value_corrected'] = results_df['p_value']
+#
 # Determine significance after FDR correction
 results_df['Significant'] = results_df['p_value_corrected'] < 0.05
 
@@ -101,9 +101,10 @@ def plot_scatter(df, col1name, col2name):
     plt.title(f'{col1name} vs {col2name}')
 
     # Show the plot
-    plt.show()
+    plt.show(block=False)
 
-# plot_scatter(combined_df, 'FlankerSU', 'Callosum Forceps Minor MD')
+for i in range(21, 81):
+    plot_scatter(combined_df, 'FlankerSU', f'Callosum Forceps Minor_{i}')
 
 mystop=1
 
