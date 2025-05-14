@@ -10,6 +10,9 @@ from sklearn.linear_model import LinearRegression
 # Define dti metric for calculations
 diffusion_var = 'md'
 
+brain_regions_of_interest = ['Minor']
+behaviors_of_interest = ['SU']
+
 # Get working directory
 working_dir = os.getcwd()
 
@@ -29,9 +32,6 @@ dwi_zs = dwi_zs.groupby('participant_id', as_index=False).mean()
 
 # Remove rows where participant_id is odd
 # behav_zs = behav_zs[behav_zs['participant_id'] % 2 == 0]
-
-brain_regions_of_interest = ['Minor' ]
-behaviors_of_interest = ['SU']
 
 # Keep only behavior columns that contain substrings from behaviors_of_interest, plus 'participant_id'
 behav_zs = behav_zs[[col for col in behav_zs.columns if any(sub in col for sub in behaviors_of_interest) or col == 'participant_id']]
@@ -59,7 +59,7 @@ combined_df = combined_df[columns_to_keep]
 matched_brain_columns = [col for col in combined_df.columns if any(sub in col for sub in behaviors_of_interest)]
 
 # Drop rows where *any* of those columns has a value less than -2
-combined_df = combined_df[~(combined_df[matched_brain_columns] < -2).any(axis=1)]
+# combined_df = combined_df[~(combined_df[matched_brain_columns] < -2).any(axis=1)]
 
 # Expand behavior columns based on substrings
 expanded_behaviors = [col for col in combined_df.columns if any(sub in col for sub in behaviors_of_interest)]
@@ -67,11 +67,21 @@ expanded_behaviors = [col for col in combined_df.columns if any(sub in col for s
 # Expand brain region columns based on substrings
 expanded_brain_regions = [col for col in combined_df.columns if any(sub in col for sub in brain_regions_of_interest)]
 
-# Calculate correlations and p-values
 results = []
-for col1, col2 in product(expanded_behaviors, expanded_brain_regions):
-    corr, p_value = pearsonr(combined_df[col1], combined_df[col2])  # Compute correlation and p-value
-    results.append({'Column1': col1, 'Column2': col2, 'Correlation': corr, 'p_value': p_value})
+# Average values for all brain regions
+substring = 'Minor'
+columns_to_average = [col for col in combined_df.columns if substring in col]
+combined_df['average_brain_val'] = combined_df[columns_to_average].mean(axis=1)
+
+behav='FlankerSU'
+single_brain_corr, single_brain_p = pearsonr(combined_df[behav], combined_df['average_brain_val'])
+results.append({'Column1': behav, 'Column2': 'average_brain_val', 'Correlation': single_brain_corr, 'p_value': single_brain_p})
+behav='DCSU'
+single_brain_corr, single_brain_p = pearsonr(combined_df[behav], combined_df['average_brain_val'])
+results.append({'Column1': behav, 'Column2': 'average_brain_val', 'Correlation': single_brain_corr, 'p_value': single_brain_p})
+behav='WMemorySU'
+single_brain_corr, single_brain_p = pearsonr(combined_df[behav], combined_df['average_brain_val'])
+results.append({'Column1': behav, 'Column2': 'average_brain_val', 'Correlation': single_brain_corr, 'p_value': single_brain_p})
 
 # Convert results to a DataFrame
 results_df = pd.DataFrame(results)
@@ -81,15 +91,14 @@ _, pvals_corrected, _, _ = multipletests(results_df['p_value'], alpha=0.05, meth
 
 # Add corrected p-values to the DataFrame
 results_df['p_value_corrected'] = pvals_corrected
-# results_df['p_value_corrected'] = results_df['p_value']
-#
+
 # Determine significance after FDR correction
 results_df['Significant'] = results_df['p_value_corrected'] < 0.05
 
-a_filtered_df = results_df[results_df['Significant'] == True]
+filtered_df = results_df[results_df['Significant'] == True]
 
 # Define a function that plots 2 columns as scatter plot
-def plot_scatter(df, col1name, col2name, diffusion_var):
+def plot_scatter(df, col1name, col2name, title):
 
     # Create a scatter plot
     plt.scatter(df[col1name], df[col2name])
@@ -104,13 +113,16 @@ def plot_scatter(df, col1name, col2name, diffusion_var):
     # Add labels and title
     plt.xlabel(col1name)
     plt.ylabel(col2name)
-    plt.title(f'{col1name} vs {col2name} {diffusion_var}')
+    plt.title(title)
 
     # Show the plot
     plt.show(block=False)
 
-for i in range(24, 40):
-    plot_scatter(combined_df, 'FlankerSU', f'Callosum Forceps Minor_{i}', diffusion_var)
+title = 'Z Flanker SU vs Z Callosum Forceps Minor avg MD post-COVID'
+plot_scatter(combined_df, 'FlankerSU', 'average_brain_val', title)
+
+pd.set_option('display.max_columns', None)
+print(results_df)
 
 mystop=1
 
