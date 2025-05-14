@@ -10,10 +10,11 @@ from sklearn.linear_model import LinearRegression
 # Define dti metric for calculations
 diffusion_var = 'md'
 
+# Add remove outliers flag
 remove_outliers = 0
 
 brain_regions_of_interest = ['Minor']
-behaviors_of_interest = ['SU']
+behaviors_of_interest = ['FlankerSU', 'DCSU']
 
 # Get working directory
 working_dir = os.getcwd()
@@ -72,7 +73,7 @@ expanded_brain_regions = [col for col in combined_df.columns if any(sub in col f
 
 results = []
 # Average values for all brain regions
-substring = 'Minor'
+substring = brain_regions_of_interest[0]
 columns_to_average = [col for col in combined_df.columns if substring in col]
 combined_df['average_brain_val'] = combined_df[columns_to_average].mean(axis=1)
 
@@ -82,9 +83,9 @@ results.append({'Column1': behav, 'Column2': 'average_brain_val', 'Correlation':
 behav='DCSU'
 single_brain_corr, single_brain_p = pearsonr(combined_df[behav], combined_df['average_brain_val'])
 results.append({'Column1': behav, 'Column2': 'average_brain_val', 'Correlation': single_brain_corr, 'p_value': single_brain_p})
-behav='WMemorySU'
-single_brain_corr, single_brain_p = pearsonr(combined_df[behav], combined_df['average_brain_val'])
-results.append({'Column1': behav, 'Column2': 'average_brain_val', 'Correlation': single_brain_corr, 'p_value': single_brain_p})
+# behav='WMemorySU'
+# single_brain_corr, single_brain_p = pearsonr(combined_df[behav], combined_df['average_brain_val'])
+# results.append({'Column1': behav, 'Column2': 'average_brain_val', 'Correlation': single_brain_corr, 'p_value': single_brain_p})
 
 # Convert results to a DataFrame
 results_df = pd.DataFrame(results)
