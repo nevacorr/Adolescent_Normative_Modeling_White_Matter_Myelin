@@ -10,6 +10,8 @@ from sklearn.linear_model import LinearRegression
 # Define dti metric for calculations
 diffusion_var = 'md'
 
+remove_outliers = 0
+
 brain_regions_of_interest = ['Minor']
 behaviors_of_interest = ['SU']
 
@@ -58,8 +60,9 @@ combined_df = combined_df[columns_to_keep]
 # Expand brain_regions_of_interest to full column names using substring matching
 matched_brain_columns = [col for col in combined_df.columns if any(sub in col for sub in behaviors_of_interest)]
 
-# Drop rows where *any* of those columns has a value less than -2
-# combined_df = combined_df[~(combined_df[matched_brain_columns] < -2).any(axis=1)]
+if remove_outliers:
+    # Drop rows where *any* of those columns has a value less than -2
+    combined_df = combined_df[~(combined_df[matched_brain_columns] < -2).any(axis=1)]
 
 # Expand behavior columns based on substrings
 expanded_behaviors = [col for col in combined_df.columns if any(sub in col for sub in behaviors_of_interest)]
@@ -118,7 +121,7 @@ def plot_scatter(df, col1name, col2name, title):
     # Show the plot
     plt.show(block=False)
 
-title = 'Z Flanker SU vs Z Callosum Forceps Minor avg MD post-COVID'
+title = f'Z Flanker SU vs Z Callosum Forceps Minor avg {diffusion_var.upper()} post-COVID'
 plot_scatter(combined_df, 'FlankerSU', 'average_brain_val', title)
 
 pd.set_option('display.max_columns', None)
