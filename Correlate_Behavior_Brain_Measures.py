@@ -55,6 +55,12 @@ columns_to_keep = [
 # Reassign the DataFrame with the filtered columns
 combined_df = combined_df[columns_to_keep]
 
+# Expand brain_regions_of_interest to full column names using substring matching
+matched_brain_columns = [col for col in combined_df.columns if any(sub in col for sub in behaviors_of_interest)]
+
+# Drop rows where *any* of those columns has a value less than -2
+combined_df = combined_df[~(combined_df[matched_brain_columns] < -2).any(axis=1)]
+
 # Expand behavior columns based on substrings
 expanded_behaviors = [col for col in combined_df.columns if any(sub in col for sub in behaviors_of_interest)]
 
@@ -83,7 +89,7 @@ results_df['Significant'] = results_df['p_value_corrected'] < 0.05
 a_filtered_df = results_df[results_df['Significant'] == True]
 
 # Define a function that plots 2 columns as scatter plot
-def plot_scatter(df, col1name, col2name):
+def plot_scatter(df, col1name, col2name, diffusion_var):
 
     # Create a scatter plot
     plt.scatter(df[col1name], df[col2name])
@@ -98,13 +104,13 @@ def plot_scatter(df, col1name, col2name):
     # Add labels and title
     plt.xlabel(col1name)
     plt.ylabel(col2name)
-    plt.title(f'{col1name} vs {col2name}')
+    plt.title(f'{col1name} vs {col2name} {diffusion_var}')
 
     # Show the plot
     plt.show(block=False)
 
-for i in range(21, 81):
-    plot_scatter(combined_df, 'FlankerSU', f'Callosum Forceps Minor_{i}')
+for i in range(24, 40):
+    plot_scatter(combined_df, 'FlankerSU', f'Callosum Forceps Minor_{i}', diffusion_var)
 
 mystop=1
 
