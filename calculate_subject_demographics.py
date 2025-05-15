@@ -25,34 +25,34 @@ visit2_subjects.rename(columns={'participant_id': 'subject'}, inplace=True)
 visit1_all = visit1_subjects.merge(v1_demo_data, on='subject', how='left')
 visit2_all = visit2_subjects.merge(v2_demo_data, on='subject', how='left')
 
-def summarize_subjs(df):
-    summary = (
-        df.groupby('gender')['agedays']
-                  .agg(N='count', mean_days='mean', std_days='std')
-                  .assign(
-                    mean_years = lambda x: x['mean_days'] / conv_days_to_years,
-                    std_years = lambda x: x['std_days'] / conv_days_to_years
-                  )
-                  .reset_index()
+def summarize_visit(df):
+    # Mean and std age by gender and agegroup
+    agegroup_gender_summary = (
+        df.groupby(['gender', 'agegroup'])['agedays']
+        .agg(N='count', mean_days='mean', std_days='std')
+        .assign(
+            mean_years=lambda x: x['mean_days'] / conv_days_to_years,
+            std_years=lambda x: x['std_days'] / conv_days_to_years
+        )
+        .reset_index()
     )
-    agegroup_counts = (
-        df.groupby(['gender', 'agegroup'])
-        .size()
-        .unstack(fill_value=0))
+    return agegroup_gender_summary
 
-    return summary, agegroup_counts
+def print_summaries(agegroup_gender_summary, visit_name="Visit"):
 
-v1_summary, v1_agegroup_counts = summarize_subjs(visit1_all)
-v2_summary, v2_agegroup_counts = summarize_subjs(visit2_all)
+    print(f"\n--- {visit_name} Age Summary by Gender and Age Group ---")
+    # Format floats to 2 decimals for readability
+    formatted = agegroup_gender_summary.copy()
+    formatted['mean_days'] = formatted['mean_days'].round(2)
+    formatted['std_days'] = formatted['std_days'].round(2)
+    formatted['mean_years'] = formatted['mean_years'].round(2)
+    formatted['std_years'] = formatted['std_years'].round(2)
 
-print('visit 1')
-print(v1_summary)
-print('\n')
-print(v1_agegroup_counts)
-print('\n')
-print('visit 2')
-print(v2_summary)
-print('\n')
-print(v2_agegroup_counts)
+    print(formatted.to_string(index=False))
 
-mystop=1
+v1_agegroup_gender_summary = summarize_visit(visit1_all)
+v2_agegroup_gender_summary = summarize_visit(visit2_all)
+
+print_summaries(v1_agegroup_gender_summary, visit_name="Visit 1")
+print_summaries(v2_agegroup_gender_summary, visit_name="Visit 2")
+
