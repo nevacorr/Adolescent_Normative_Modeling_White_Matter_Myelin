@@ -19,6 +19,11 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
                   md_datafilename_v2, mpf_datafilename_v1, mpf_datafilename_v2, demographics_filename,
                   subjects_to_exclude_v1, subjects_to_exclude_v2, mpf_subjects_to_exclude_v1, mpf_subjects_to_exclude_v2))
 
+    all_subjects_v1 = fa_all_data_v1['participant_id']
+    all_subjects_v2 = fa_all_data_v2['participant_id']
+    all_subjects_v1.to_csv('visit1_all_subjects_used_in_analysis.csv', index=False)
+    all_subjects_v2.to_csv('visit2_all_subjects_used_in_analysis.csv', index=False)
+
     make_nm_directories(working_dir, 'data', 'predict_files')
 
     sub_v1_only = sub_v1_only_orig.copy()
