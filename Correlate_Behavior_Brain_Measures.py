@@ -7,6 +7,8 @@ from statsmodels.stats.multitest import multipletests
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 
+save_path = os.getcwd()
+
 # Define dti metric for calculations
 diffusion_var = 'md'
 
@@ -102,7 +104,7 @@ results_df['Significant'] = results_df['p_value_corrected'] < 0.05
 filtered_df = results_df[results_df['Significant'] == True]
 
 # Define a function that plots 2 columns as scatter plot
-def plot_scatter(df, col1name, col2name, title):
+def plot_scatter(df, col1name, col2name, title, xlabel, ylabel):
 
     # Create a scatter plot
     plt.scatter(df[col1name], df[col2name])
@@ -115,15 +117,19 @@ def plot_scatter(df, col1name, col2name, title):
     plt.plot(combined_df[[col1name]], model.predict(combined_df[[col1name]]), color='red')
 
     # Add labels and title
-    plt.xlabel(col1name)
-    plt.ylabel(col2name)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
     plt.title(title)
+
+    # Invert Y-axis so smaller values are at the top
+    plt.gca().invert_yaxis()
 
     # Show the plot
     plt.show(block=False)
 
 title = f'Z Flanker SU vs Z Callosum Forceps Minor avg {diffusion_var.upper()} post-COVID'
-plot_scatter(combined_df, 'FlankerSU', 'average_brain_val', title)
+plot_scatter(combined_df, 'FlankerSU', 'average_brain_val', title, 'Z-score Flanker', 'Z-score MD Callosum Forceps Minor')
+plt.savefig(os.path.join(save_path, 'Z_MD_Forceps_Minor vs Z_Flanker'), dpi=300, bbox_inches='tight')
 
 pd.set_option('display.max_columns', None)
 print(results_df)
