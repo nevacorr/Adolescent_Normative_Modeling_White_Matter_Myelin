@@ -12,6 +12,7 @@ from Utility_Functions import create_dummy_design_matrix, plot_data_with_spline_
 from Utility_Functions import barplot_performance_values, plot_y_v_yhat, makenewdir, movefiles
 from Utility_Functions import write_ages_to_file, write_list_to_file
 from apply_normative_model_time2 import apply_normative_model_time2
+from evaluate_spline_parameters_cv import evaluate_splines_cv
 
 def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, train_set_array, test_set_array,
                show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids):
@@ -69,6 +70,11 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
         # identify age range in pre-COVID data to be used for modeling
         agemin = X_train['agedays'].min()
         agemax = X_train['agedays'].max()
+
+        # Run 5 fold cross validation to evaluate best spline parameters
+        if split==0:
+            cv_dir = f"{working_dir}/spline_cv_split0_{struct_var_metric}"
+            evaluate_splines_cv(X_train, y_train, roi_ids, agemin, agemax, cv_dir)
 
         if struct_var_metric == 'fa':
             write_ages_to_file(working_dir, agemin, agemax, struct_var_metric)
