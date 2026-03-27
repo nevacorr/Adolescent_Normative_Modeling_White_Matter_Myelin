@@ -75,6 +75,7 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
         if split==0:
             cv_dir = f"{working_dir}/spline_cv_split0_{struct_var_metric}"
             evaluate_splines_cv(X_train, y_train, roi_ids, agemin, agemax, cv_dir)
+            os.chdir(working_dir)
 
         if struct_var_metric == 'fa':
             write_ages_to_file(working_dir, agemin, agemax, struct_var_metric)
