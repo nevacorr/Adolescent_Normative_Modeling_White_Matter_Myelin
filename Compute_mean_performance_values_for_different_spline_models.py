@@ -5,13 +5,13 @@ from numpy.core.defchararray import capitalize
 data_type='md'  #option "md", "fa"
 
 # Load data
-df = pd.read_csv(f"spline_cv_split0_md/mean_metrics_per_spline_{data_type}.csv")
-
-# Extract region prefix (R1, R2, etc.)
-df["region"] = df["roi"].str.split("_").str[0]
+df = pd.read_csv(f"spline_cv_split0_{data_type}/mean_metrics_per_spline.csv")
 
 # Metrics to average
 metrics = ["RMSE", "Rho", "pRho", "SMSE", "EXPV", "MSLL", "NLL", "BIC"]
+
+# Extract region prefix (R1, R2, etc.)
+df["region"] = df["roi"].str.split("_").str[0]
 
 # ---- 1. Mean per region AND spline settings ----
 df_region_spline_mean = (
@@ -46,11 +46,11 @@ for region in df_region_spline_mean["region"].unique():
     sub = df_region_spline_mean[df_region_spline_mean["region"] == region]
     x = sub["order_knot"].map(x_map)
 
-    plt.plot(x, sub["BIC"], marker='o', label=region)
+    plt.plot(sub["BIC"], x, marker='o', label=region)
 
-plt.xticks(range(len(order_knot_labels)), order_knot_labels)
-plt.xlabel("spline_order_knots")
-plt.ylabel("BIC")
+plt.yticks(range(len(order_knot_labels)), order_knot_labels)
+plt.ylabel("spline_order_knots")
+plt.xlabel("BIC")
 plt.title(f"{capitalize(data_type)} BIC across spline values (all regions)")
 plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
 plt.tight_layout()
