@@ -1,12 +1,18 @@
-def evaluate_splines_cv(X_train,y_train, roi_ids, agemin,agemax,cv_dir,spline_orders=[1, 2],spline_knots_list=[2, 3],n_folds=5):
-    import os
-    import shutil
-    import numpy as np
-    import pandas as pd
-    from sklearn.model_selection import KFold
-    from pcntoolkit.normative import estimate
-    from Utility_Functions import create_design_matrix, makenewdir
+import os
+import shutil
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import KFold
+from pcntoolkit.normative import estimate
+from Utility_Functions import create_design_matrix, makenewdir
 
+def evaluate_splines_cv(X_train,y_train, roi_ids, agemin,agemax,cv_dir,spline_orders=[1, 2],spline_knots_list=[2, 3],n_folds=5):
+
+    try:
+        shutil.rmtree(cv_dir)
+        print(f"Directory '{cv_dir}' and its contents have been removed.")
+    except FileNotFoundError:
+        print(f"Directory '{cv_dir}' does not exist.")
     makenewdir(cv_dir)
 
     allfoldsdf = pd.DataFrame()  # store all folds’ metrics
@@ -24,7 +30,8 @@ def evaluate_splines_cv(X_train,y_train, roi_ids, agemin,agemax,cv_dir,spline_or
                 kf = KFold(n_splits=n_folds, shuffle=True, random_state=42)
 
                 fold_idx = 0
-                for train_idx, val_idx in kf.split(X_train):  
+                for train_idx, val_idx in kf.split(X_train):
+                    print(f"roi={roi} order={order} knots={knots} fold={fold_idx}")
                     X_tr = X_train.iloc[train_idx].reset_index(drop=True)
                     X_val = X_train.iloc[val_idx].reset_index(drop=True)
                     y_tr = y_train.iloc[train_idx][[roi]].reset_index(drop=True)
@@ -33,6 +40,22 @@ def evaluate_splines_cv(X_train,y_train, roi_ids, agemin,agemax,cv_dir,spline_or
                     # drop the age column from the train and val data set because we want to use agedays and sex as predictors
                     X_tr.drop(columns=['age'], inplace=True)
                     X_val.drop(columns=['age'], inplace=True)
+
+                    # ---- Handle NaNs ----
+                    y_tr_nan_index = y_tr[y_tr[roi].isna()].index
+                    y_val_nan_index = y_val[y_val[roi].isna()].index
+
+                    if len(y_tr_nan_index) > 0:
+                        print(
+                            f"Dropping {len(y_tr_nan_index)} NaN rows from training for ROI {roi}, order {order}, knots {knots}, fold {fold_idx}")
+                        X_tr = X_tr.drop(labels=y_tr_nan_index).reset_index(drop=True)
+                        y_tr = y_tr.drop(labels=y_tr_nan_index).reset_index(drop=True)
+
+                    if len(y_val_nan_index) > 0:
+                        print(
+                            f"Dropping {len(y_val_nan_index)} NaN rows from validation for ROI {roi}, order {order}, knots {knots}, fold {fold_idx}")
+                        X_val = X_val.drop(labels=y_val_nan_index).reset_index(drop=True)
+                        y_val = y_val.drop(labels=y_val_nan_index).reset_index(drop=True)
 
                     order_dir = os.path.join(cv_dir, f"order{order}_knots{knots}_findex{fold_idx}")
                     makenewdir(order_dir)
