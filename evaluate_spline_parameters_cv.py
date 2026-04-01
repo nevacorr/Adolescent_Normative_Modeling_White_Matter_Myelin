@@ -3,7 +3,7 @@ def evaluate_splines_cv(X_train,y_train, roi_ids, agemin,agemax,cv_dir,spline_or
     import shutil
     import numpy as np
     import pandas as pd
-    from sklearn.model_selection import StratifiedKFold
+    from sklearn.model_selection import KFold
     from pcntoolkit.normative import estimate
     from Utility_Functions import create_design_matrix, makenewdir
 
@@ -18,13 +18,13 @@ def evaluate_splines_cv(X_train,y_train, roi_ids, agemin,agemax,cv_dir,spline_or
             for knots in spline_knots_list:
 
                 # Combine numeric age and sex into a string label for stratification
-                strat_feature = X_train['age'].astype(str) + "_" + X_train['sex'].astype(str)
+#                strat_feature = X_train['age'].astype(str) + "_" + X_train['sex'].astype(str)
 
                 # For stratification, here we just shuffle
-                kf = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=42)
+                kf = KFold(n_splits=n_folds, shuffle=True, random_state=42)
 
                 fold_idx = 0
-                for train_idx, val_idx in kf.split(X_train, strat_feature):  # stratify by sex for example
+                for train_idx, val_idx in kf.split(X_train):  
                     X_tr = X_train.iloc[train_idx].reset_index(drop=True)
                     X_val = X_train.iloc[val_idx].reset_index(drop=True)
                     y_tr = y_train.iloc[train_idx][[roi]].reset_index(drop=True)
