@@ -21,12 +21,14 @@ plt.switch_backend("Agg")  # Use a non-Tkinter backend
 struct_var = 'fa_and_md_and_mpf'
 
 n_splits = 100   #Number of train/test splits
-
+run_make_norm_model = 1
 show_plots = 0          #set to 1 to show training and test data y vs yhat and spline fit plots.
 show_nsubject_plots = 0 #set to 1 to plot number of subjects used in analysis, for each age and gender
-spline_order = 1        # order of spline to use for model
+# spline_order = 2        # order of spline to use for model
+spline_order = 1
 spline_knots = 2        # number of knots in spline to use in model
-perform_train_test_split_precovid = 0 #flag indicating whether to split the training set (pre-COVID data) into train and validation data
+evaluate_model_using_validation_set = True
+
 data_dir = '/home/toddr/neva/PycharmProjects/data_dir'
 
 fa_visit1_datafile = 'genz_tract_profile_data/genzFA_tractProfiles_visit1.csv'
@@ -42,8 +44,6 @@ mpf_subjects_to_exclude_time2 = [] #[105, 117, 119, 201, 209, 215, 301, 306, 319
 
 file_with_demographics = 'Adol_CortThick_data.csv'
 
-run_make_norm_model = 1
-
 working_dir = os.getcwd()
 
 if run_make_norm_model:
@@ -51,7 +51,7 @@ if run_make_norm_model:
     Z_time2_fa, Z_time2_md, Z_time2_mpf, roi_ids = make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
                            data_dir, working_dir, fa_visit1_datafile, fa_visit2_datafile, md_visit1_datafile, md_visit2_datafile, mpf_visit1_datafile,
                            mpf_visit2_datafile, subjects_to_exclude_time1, subjects_to_exclude_time2, mpf_subjects_to_exclude_time1,
-                           mpf_subjects_to_exclude_time2, file_with_demographics, n_splits)
+                           mpf_subjects_to_exclude_time2, file_with_demographics, n_splits, evaluate_model_using_validation_set)
 
     plt.show(block=False)
 
