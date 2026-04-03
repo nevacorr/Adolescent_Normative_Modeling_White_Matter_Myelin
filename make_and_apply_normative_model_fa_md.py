@@ -4,13 +4,14 @@ from sklearn.model_selection import StratifiedShuffleSplit
 from make_model import make_model
 from Utility_Functions import make_nm_directories
 from load_data_all import load_data_all
+from evaluate_model_fit_using_validation_set import evaluate_model_fit_using_validation_set
 import gc
 
 def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
                               raw_data_dir, working_dir, fa_datafilename_v1, fa_datafilename_v2, md_datafilename_v1,
                               md_datafilename_v2, mpf_datafilename_v1, mpf_datafilename_v2, subjects_to_exclude_v1,
                               subjects_to_exclude_v2, mpf_subjects_to_exclude_v1, mpf_subjects_to_exclude_v2,
-                              demographics_filename, n_splits):
+                              demographics_filename, n_splits, evaluate_model_using_validation_set):
 
     # Load data
     (fa_all_data_v1, fa_all_data_v2, md_all_data_v1, md_all_data_v2, mpf_all_data_v1, mpf_all_data_v2, sub_v1_only_orig,
@@ -76,6 +77,10 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
 
     fname_test = '{}/visit1_subjects_test_sets_{}_splits_{}.txt'.format(working_dir, n_splits, struct_var)
     np.save(fname_test,test_set_array)
+
+    if evaluate_model_using_validation_set:
+        evaluate_model_fit_using_validation_set(fa_all_data_v1, 'fa', n_splits, train_set_array, working_dir, spline_order,
+                                            spline_knots, roi_ids, show_plots)
 
     Z2_all_splits_fa = make_model(fa_all_data_v1, fa_all_data_v2, 'fa', n_splits, train_set_array, test_set_array,
                show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids)
