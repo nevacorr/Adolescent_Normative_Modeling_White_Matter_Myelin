@@ -274,18 +274,18 @@ def evaluate_model_fit_using_validation_set(all_data_v1_orig, struct_var_metric,
                 s2_te = np.nan
                 Z = np.full((X_val.shape[0], 1), np.nan)
 
-            # Align true values (y_val) with any removed NaNs
-            y_true = y_val[roi].copy().reset_index(drop=True)
+            valid_idx = ~y_val[roi].isna()
 
-            # Create a DataFrame with all three columns
+            y_true = y_val.loc[valid_idx, roi].reset_index(drop=True)
+
             results_df = pd.DataFrame({
                 'y_true': y_true,
-                'yhat_te': yhat_te.flatten(),  # flatten in case it's (n,1)
+                'yhat_te': yhat_te.flatten(),
                 'Z_score': Z.flatten()
             })
 
             # Save to file for this ROI and this split
-            results_file = os.path.join(roi_dir, f'predictions_true_yhat_Z_{roi}_split{split}.csv')
+            results_file = os.path.join(roi_dir, f'predictions_true_yhat_Z_{struct_var_metric}_{roi}_split{split}.csv')
             results_df.to_csv(results_file, index=False)
             print(f"Saved predictions and Z-scores to {results_file}")
 
