@@ -285,7 +285,7 @@ def evaluate_model_fit_using_validation_set(all_data_v1_orig, struct_var_metric,
             })
 
             # Save to file for this ROI and this split
-            results_file = os.path.join(roi_dir, f'predictions_true_yhat_Z_{struct_var_metric}_{roi}_split{split}.csv')
+            results_file = os.path.join(working_dir, f'predictions_true_yhat_Z_{struct_var_metric}_{roi}_split{split}.csv')
             results_df.to_csv(results_file, index=False)
             print(f"Saved predictions and Z-scores to {results_file}")
 
