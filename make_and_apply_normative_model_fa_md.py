@@ -9,16 +9,14 @@ import gc
 
 def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
                               raw_data_dir, working_dir, fa_datafilename_v1, fa_datafilename_v2, md_datafilename_v1,
-                              md_datafilename_v2, mpf_datafilename_v1, mpf_datafilename_v2, subjects_to_exclude_v1,
-                              subjects_to_exclude_v2, mpf_subjects_to_exclude_v1, mpf_subjects_to_exclude_v2,
-                              demographics_filename, n_splits, evaluate_model_using_validation_set):
+                              md_datafilename_v2, subjects_to_exclude_v1, subjects_to_exclude_v2, demographics_filename,
+                              n_splits, evaluate_model_using_validation_set):
 
     # Load data
-    (fa_all_data_v1, fa_all_data_v2, md_all_data_v1, md_all_data_v2, mpf_all_data_v1, mpf_all_data_v2, sub_v1_only_orig,
-     sub_v2_only_orig, sub_v1_only_mpf_orig, sub_v2_only_mpf_orig, roi_ids) = (
+    (fa_all_data_v1, fa_all_data_v2, md_all_data_v1, md_all_data_v2, sub_v1_only_orig,
+     sub_v2_only_orig, roi_ids) = (
         load_data_all(raw_data_dir, fa_datafilename_v1, fa_datafilename_v2, md_datafilename_v1,
-                  md_datafilename_v2, mpf_datafilename_v1, mpf_datafilename_v2, demographics_filename,
-                  subjects_to_exclude_v1, subjects_to_exclude_v2, mpf_subjects_to_exclude_v1, mpf_subjects_to_exclude_v2))
+                  md_datafilename_v2, demographics_filename, subjects_to_exclude_v1, subjects_to_exclude_v2))
 
     all_subjects_v1 = fa_all_data_v1['participant_id']
     all_subjects_v2 = fa_all_data_v2['participant_id']
@@ -29,8 +27,6 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
 
     sub_v1_only = sub_v1_only_orig.copy()
     sub_v2_only = sub_v2_only_orig.copy()
-    sub_v1_only_mpf = sub_v1_only_mpf_orig.copy()
-    sub_v2_only_mpf = sub_v2_only_mpf_orig.copy()
 
     # remove subjects to exclude v1 from sub_v1_only
     sub_v1_only = [val for val in sub_v1_only if val not in subjects_to_exclude_v1]
@@ -103,14 +99,5 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
 
     gc.collect() # Force garbage collection
 
-    roi_ids_tmp = roi_ids.copy()
-
-    reg_to_remove = ['Left Uncinate', 'Right Uncinate']
-    roi_ids_tmp = [region for region in roi_ids if not any(substring in region for substring in reg_to_remove)]
-    Z2_all_splits_mpf = make_model(mpf_all_data_v1, mpf_all_data_v2, 'mpf', n_splits, train_set_array, test_set_array,
-               show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids_tmp)
-
-    Z2_all_splits_mpf.to_csv(f'{working_dir}/Z2_all_splits_mpf.csv')
-
-    return Z2_all_splits_fa, Z2_all_splits_md, Z2_all_splits_mpf, roi_ids
+    return Z2_all_splits_fa, Z2_all_splits_md, roi_ids
 

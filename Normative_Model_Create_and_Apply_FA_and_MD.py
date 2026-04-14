@@ -48,37 +48,29 @@ working_dir = os.getcwd()
 
 if run_make_norm_model:
 
-    Z_time2_fa, Z_time2_md, Z_time2_mpf, roi_ids = make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
-                           data_dir, working_dir, fa_visit1_datafile, fa_visit2_datafile, md_visit1_datafile, md_visit2_datafile, mpf_visit1_datafile,
-                           mpf_visit2_datafile, subjects_to_exclude_time1, subjects_to_exclude_time2, mpf_subjects_to_exclude_time1,
-                           mpf_subjects_to_exclude_time2, file_with_demographics, n_splits, evaluate_model_using_validation_set)
+    Z_time2_fa, Z_time2_md, roi_ids = make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
+                           data_dir, working_dir, fa_visit1_datafile, fa_visit2_datafile, md_visit1_datafile, md_visit2_datafile, subjects_to_exclude_time1,
+                           subjects_to_exclude_time2, file_with_demographics, n_splits, evaluate_model_using_validation_set)
 
     plt.show(block=False)
 
     tmp = Z_time2_fa.groupby(by=['participant_id'])
     Z_time2_fa = Z_time2_fa.groupby(by=['participant_id']).mean().drop(columns=['split'])
-    Z_time2_md =     Z_time2_md.groupby(by=['participant_id']).mean().drop(columns=['split'])
-    Z_time2_mpf = Z_time2_mpf.groupby(by=['participant_id']).mean().drop(columns=['split'])
+    Z_time2_md = Z_time2_md.groupby(by=['participant_id']).mean().drop(columns=['split'])
     Z_time2_fa.reset_index(inplace=True)
     Z_time2_md.reset_index(inplace=True)
-    Z_time2_mpf.reset_index(inplace=True)
 
     Z_time2_fa.to_csv(f'{working_dir}/Z_time2_fa_{n_splits}_splits.csv')
     Z_time2_md.to_csv(f'{working_dir}/Z_time2_md_{n_splits}_splits.csv')
-    Z_time2_mpf.to_csv(f'{working_dir}/Z_time2_mpf_{n_splits}_splits.csv')
     write_list_to_file(roi_ids, f'{working_dir}/roi_ids.txt')
 
 Z_time2_fa = pd.read_csv(f'{working_dir}/Z_time2_fa_{n_splits}_splits.csv', usecols=lambda col: col != "Unnamed: 0")
 Z_time2_md = pd.read_csv(f'{working_dir}/Z_time2_md_{n_splits}_splits.csv', usecols=lambda col: col != "Unnamed: 0")
-Z_time2_mpf = pd.read_csv(f'{working_dir}/Z_time2_mpf_{n_splits}_splits.csv', usecols=lambda col: col != "Unnamed: 0")
 roi_ids = pd.read_csv(f'{working_dir}/roi_ids.txt', header = None)
 roi_ids = roi_ids.iloc[:,0].tolist()
 
 plot_and_compute_zcores_by_gender(Z_time2_fa, 'fa', roi_ids, working_dir, n_splits)
 plot_and_compute_zcores_by_gender(Z_time2_md, 'md', roi_ids, working_dir, n_splits)
-roi_ids_mpf = roi_ids.copy()
-roi_ids_mpf = [reg for reg in roi_ids_mpf if 'Uncinate' not in reg]
-plot_and_compute_zcores_by_gender(Z_time2_mpf, 'mpf', roi_ids_mpf, working_dir, n_splits)
 
 plt.show()
 
