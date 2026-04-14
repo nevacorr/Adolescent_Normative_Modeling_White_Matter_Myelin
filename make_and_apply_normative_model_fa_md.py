@@ -79,8 +79,8 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
     np.save(fname_test,test_set_array)
 
     if evaluate_model_using_validation_set:
-        # evaluate_model_fit_using_validation_set(fa_all_data_v1, 'fa', n_splits, train_set_array, working_dir, spline_order,
-        #                                     spline_knots, roi_ids, show_plots)
+        evaluate_model_fit_using_validation_set(fa_all_data_v1, 'fa', n_splits, train_set_array, working_dir, spline_order,
+                                            spline_knots, roi_ids, show_plots)
 
         evaluate_model_fit_using_validation_set(md_all_data_v1, 'md', n_splits, train_set_array, working_dir, spline_order,
                                             spline_knots, roi_ids, show_plots)
