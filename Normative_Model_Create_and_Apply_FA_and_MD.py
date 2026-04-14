@@ -20,14 +20,14 @@ plt.switch_backend("Agg")  # Use a non-Tkinter backend
 
 struct_var = 'fa_and_md_and_mpf'
 
-n_splits = 20   #Number of train/test splits
+n_splits = 100   #Number of train/test splits
 run_make_norm_model = 1
 show_plots = 0          #set to 1 to show training and test data y vs yhat and spline fit plots.
 show_nsubject_plots = 0 #set to 1 to plot number of subjects used in analysis, for each age and gender
 # spline_order = 2        # order of spline to use for model
 spline_order = 1
 spline_knots = 2        # number of knots in spline to use in model
-evaluate_model_using_validation_set = True
+evaluate_model_using_validation_set = False
 
 data_dir = '/home/toddr/neva/PycharmProjects/data_dir'
 
