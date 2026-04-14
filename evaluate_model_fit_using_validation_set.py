@@ -18,6 +18,8 @@ def evaluate_model_fit_using_validation_set(all_data_v1_orig, struct_var_metric,
 
     make_nm_directories(working_dir, valdata, valpredict)
 
+    f_models = []
+
     for split in range(n_splits):
         print(f"VALIDATION SPLIT NUMBER = {split+1}/{n_splits}")
 
@@ -149,12 +151,15 @@ def evaluate_model_fit_using_validation_set(all_data_v1_orig, struct_var_metric,
                 yhat_tr, s2_tr, nm, Z_tr, metrics_tr = estimate(cov_file_tr, resp_file_tr, testresp=resp_file_tr,
                                                                 testcov=cov_file_tr, alg='blr', optimizer='powell',
                                                                 savemodel=True, saveoutput=False, standardize=False)
-            except:
-                yhat_tr = np.nan
-                s2_tr = np.nan
-                nm = np.nan
-                Z_tr = np.nan
-                metrics_tr = np.nan
+            except Exception as e:
+                f_models.append({
+                    "metric": struct_var_metric,
+                    "split": split,
+                    "roi": roi,
+                    "stage": "estimate",
+                    "error": str(e)
+                })
+
 
             # # create dummy design matrices for visualizing model
             # dummy_cov_file_path_female, dummy_cov_file_path_male = \
@@ -201,12 +206,12 @@ def evaluate_model_fit_using_validation_set(all_data_v1_orig, struct_var_metric,
 
         tcounter = 0  # Initialize counter
 
+        X_val_copy = X_val.copy()
+        y_val_copy = y_val.copy()
+
         for c in y_val.columns:
 
-            y_val_nan_index[c] = y_val[y_val[c].isna()].index.to_list()
-
-            X_val_copy = X_val.copy()
-            y_val_copy = y_val.copy()
+            y_val_nan_index[c] = y_val_copy[y_val_copy[c].isna()].index.to_list()
 
             # If there are nan values for this region remove the subject from X_train and y_train for this region only
             if len(y_val_nan_index[c]) == 0:
@@ -269,20 +274,27 @@ def evaluate_model_fit_using_validation_set(all_data_v1_orig, struct_var_metric,
                 # make predictions
                 yhat_te, s2_te, Z = predict(cov_file_te, respfile=resp_file_te, alg='blr', model_path=model_dir)
 
-            except:
-                yhat_te = np.nan
-                s2_te = np.nan
+            except Exception as e:
+                yhat_te = np.full((X_val.shape[0], 1), np.nan)
                 Z = np.full((X_val.shape[0], 1), np.nan)
+                f_models.append({
+                    "metric": struct_var_metric,
+                    "split": split,
+                    "roi": roi,
+                    "stage": "predict",
+                    "error": str(e)
+                })
 
-            valid_idx = ~y_val[roi].isna()
+            valid_idx = ~y_val.index.isin(y_val_nan_index[roi])
 
             y_true = y_val.loc[valid_idx, roi].reset_index(drop=True)
 
             results_df = pd.DataFrame({
                 'y_true': y_true,
-                'yhat_te': yhat_te.flatten(),
-                'Z_score': Z.flatten()
+                'yhat_te': np.ravel(yhat_te),
+                'Z_score': np.ravel(Z)
             })
+
 
             # Save to file for this ROI and this split
             results_file = os.path.join(working_dir, f'predictions_true_yhat_Z_{struct_var_metric}_{roi}_split{split}.csv')
@@ -314,7 +326,10 @@ def evaluate_model_fit_using_validation_set(all_data_v1_orig, struct_var_metric,
         Z_time2.to_csv('{}/{}/{}/Z_scores_by_region_postcovid_valset_{}_Final.txt'
                        .format(working_dir, valpredict, struct_var_metric,split), index=False)
 
-        plt.show()
+        pd.DataFrame(f_models).to_csv(
+            f"{working_dir}/f_models_{struct_var_metric}.csv",
+            index=False
+        )
 
         print(f"finished SPLIT NUMBER = {split}/{n_splits}")
 
