@@ -6,6 +6,13 @@ import seaborn as sns
 
 n_splits = 100
 
+palette = {
+    "Male": [0.11, 0.62, 0.47],
+    "Female": [0.46, 0.44, 0.70]
+}
+
+hue_order = ["Male", "Female"]
+
 working_dir = os.getcwd()
 data_dir = 'results_orig_ImageNeursci_submission'
 
@@ -24,6 +31,8 @@ for metric in ['fa']:
 
     # gender
     Z_time2['gender'] = Z_time2['participant_id'].apply(lambda x: 0 if x % 2 == 0 else 1)
+
+    Z_time2['gender'] = Z_time2['gender'].map({0: 'Male', 1: 'Female'})
 
     Z_long = Z_time2.melt(
         id_vars=['participant_id', 'gender'],
@@ -45,7 +54,13 @@ for metric in ['fa']:
 
     # Make sure gender is readable
     Z_plot = Z_plot.copy()
-    Z_plot['gender'] = Z_plot['gender'].map({0: 'Male', 1: 'Female'})
+    Z_plot["gender"] = pd.Categorical(
+        Z_plot["gender"],
+        categories=hue_order,
+        ordered=True
+    )
+
+    # Z_plot['gender'] = Z_plot['gender'].map({0: 'Male', 1: 'Female'})
 
     fig, axes = plt.subplots(1, 3, figsize=(15, 4), sharey=True)
 
@@ -58,12 +73,14 @@ for metric in ['fa']:
             data=subset,
             x="z",
             hue="gender",
+            hue_order=hue_order,
             bins=12,
             stat="count",
             multiple="layer",
             # element="step",
             alpha=0.5,
             edgecolor=None,
+            palette=palette,
             ax=ax
         )
         ax.set_xlim(x_min, x_max)
@@ -75,8 +92,8 @@ for metric in ['fa']:
     # fig.legend(handles, labels, title="Sex", loc="center right")
 
     handles = [
-        mpatches.Patch(color=sns.color_palette()[0], label="Male", alpha=0.5),
-        mpatches.Patch(color=sns.color_palette()[1], label="Female", alpha=0.5),
+        mpatches.Patch(color=palette["Male"], label="Male", alpha=0.5),
+        mpatches.Patch(color=palette["Female"], label="Female", alpha=0.5),
     ]
 
     fig.legend(
