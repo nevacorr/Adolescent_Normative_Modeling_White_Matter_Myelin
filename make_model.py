@@ -15,7 +15,7 @@ from apply_normative_model_time2 import apply_normative_model_time2
 from evaluate_spline_parameters_cv import evaluate_splines_cv
 
 def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, train_set_array, test_set_array,
-               show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids):
+               show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids, sensitivity_analysis):
 
     dirdata = 'data'
     dirpredict = 'predict_files'
@@ -44,6 +44,11 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
         all_data_v1.reset_index(drop=True, inplace=True)
         all_data_v2.reset_index(drop=True, inplace=True)
 
+        if sensitivity_analysis:
+            combined_age = pd.concat([all_data_v1["agedays"], all_data_v2["agedays"]])
+            agemin = combined_age.min()
+            agemax = combined_age.max()
+
         # plot number of subjects of each gender by age who are included in training data set
         if show_nsubject_plots:
             plot_num_subjs(all_data_v1,
@@ -67,9 +72,10 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
         X_train = all_data_covariates.copy()
         y_train = all_data_features.copy()
 
-        # identify age range in pre-COVID data to be used for modeling
-        agemin = X_train['agedays'].min()
-        agemax = X_train['agedays'].max()
+        if not sensitivity_analysis:
+            # identify age range in pre-COVID data to be used for modeling
+            agemin = X_train['agedays'].min()
+            agemax = X_train['agedays'].max()
 
         # Run 5 fold cross validation to evaluate best spline parameters
         # if split==0:
@@ -189,7 +195,8 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
                 metrics_tr = np.nan
 
         Z_time2 = apply_normative_model_time2(struct_var_metric, show_plots, show_nsubject_plots, spline_order,
-                                    spline_knots, working_dir, all_data_v2, roi_ids, dirdata, dirpredict, split, n_splits)
+                                    spline_knots, working_dir, all_data_v2, roi_ids, dirdata, dirpredict, split,
+                                              n_splits, sensitivity_analysis)
 
         Z_time2['split'] = split
 

@@ -12,11 +12,13 @@ import shutil
 from normative_edited import predict
 
 def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
-                                working_dir, all_data_v2, roi_ids, dirdata, dirpredict, split, n_splits):
+                                working_dir, all_data_v2, roi_ids, dirdata, dirpredict, split, n_splits,
+                                sensitivity_analysis):
 
     ######################## Apply Normative Model to Post-Covid Data ############################
 
-    all_data_v2 = all_data_v2[all_data_v2['participant_id']<400]
+    if not sensitivity_analysis:
+        all_data_v2 = all_data_v2[all_data_v2['participant_id']<400]
 
     makenewdir('{}/{}/{}/ROI_models'.format(working_dir, dirpredict, struct_var))
     makenewdir('{}/{}/{}/covariate_files'.format(working_dir, dirpredict, struct_var))

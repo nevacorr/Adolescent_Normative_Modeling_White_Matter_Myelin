@@ -20,7 +20,7 @@ plt.switch_backend("Agg")  # Use a non-Tkinter backend
 
 struct_var = 'fa_and_md_and_mpf'
 
-n_splits = 100   #Number of train/test splits
+n_splits = 100  #Number of train/test splits
 run_make_norm_model = 1
 show_plots = 0          #set to 1 to show training and test data y vs yhat and spline fit plots.
 show_nsubject_plots = 0 #set to 1 to plot number of subjects used in analysis, for each age and gender
@@ -28,6 +28,7 @@ show_nsubject_plots = 0 #set to 1 to plot number of subjects used in analysis, f
 spline_order = 1
 spline_knots = 2        # number of knots in spline to use in model
 evaluate_model_using_validation_set = False
+sensitivity_analysis = True
 
 data_dir = '/home/toddr/neva/PycharmProjects/data_dir'
 
@@ -50,7 +51,7 @@ if run_make_norm_model:
 
     Z_time2_fa, Z_time2_md, roi_ids = make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
                            data_dir, working_dir, fa_visit1_datafile, fa_visit2_datafile, md_visit1_datafile, md_visit2_datafile, subjects_to_exclude_time1,
-                           subjects_to_exclude_time2, file_with_demographics, n_splits, evaluate_model_using_validation_set)
+                           subjects_to_exclude_time2, file_with_demographics, n_splits, evaluate_model_using_validation_set, sensitivity_analysis)
 
     plt.show(block=False)
 
