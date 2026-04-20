@@ -81,6 +81,15 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
         evaluate_model_fit_using_validation_set(md_all_data_v1, 'md', n_splits, train_set_array, working_dir, spline_order,
                                             spline_knots, roi_ids, show_plots)
 
+    Z2_all_splits_md = make_model(md_all_data_v1, md_all_data_v2, 'md', n_splits, train_set_array, test_set_array,
+               show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids, sensitivity_analysis)
+
+    Z2_all_splits_md.to_csv(f'{working_dir}/Z2_all_splits_md.csv')
+
+    Z2_all_splits_md = []
+
+    gc.collect() # Force garbage collection
+
     Z2_all_splits_fa = make_model(fa_all_data_v1, fa_all_data_v2, 'fa', n_splits, train_set_array, test_set_array,
                show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids, sensitivity_analysis)
 
@@ -90,14 +99,7 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
 
     gc.collect() # Force garbage collection
 
-    Z2_all_splits_md = make_model(md_all_data_v1, md_all_data_v2, 'md', n_splits, train_set_array, test_set_array,
-               show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids, sensitivity_analysis)
 
-    Z2_all_splits_md.to_csv(f'{working_dir}/Z2_all_splits_md.csv')
-
-    Z2_all_splits_md = []
-
-    gc.collect() # Force garbage collection
 
     return Z2_all_splits_fa, Z2_all_splits_md, roi_ids
 
