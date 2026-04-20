@@ -99,7 +99,5 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
 
     gc.collect() # Force garbage collection
 
-
-
     return Z2_all_splits_fa, Z2_all_splits_md, roi_ids
 
