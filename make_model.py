@@ -85,6 +85,8 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
 
         if struct_var_metric == 'fa':
             write_ages_to_file(working_dir, agemin, agemax, struct_var_metric)
+        elif struct_var_metric == 'md':
+            write_ages_to_file(working_dir, agemin, agemax, struct_var_metric)
 
         # drop the age column from the train data set because we want to use agedays and sex as predictors
         X_train.drop(columns=['age'], inplace=True)
