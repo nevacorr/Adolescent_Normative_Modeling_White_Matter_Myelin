@@ -1,3 +1,4 @@
+
 ####
 # This program calculate the mean Z score and confidence intervals for males and females. This is an estimate
 # of effect size.
@@ -13,26 +14,33 @@ import statsmodels as sm
 import statsmodels.api as sapi
 from statsmodels.stats.anova import AnovaRM
 from statsmodels.regression.mixed_linear_model import MixedLM
+import pingouin as pg
 
 working_dir = os.getcwd()
 
 # Specify filename for post-covid z-scores
-Z_time2_file = f'{working_dir}/Z_time2_md_100_splits.csv'
+Z_time2_file = f'{working_dir}/predict_files/cortthick/Z_scores_by_region_postcovid_testset_Final.txt'
 
 # Load Z scores from post-covid data
-Z2 = pd.read_csv(Z_time2_file, usecols=lambda column: column != 'Unnamed: 0')
+Z2 = pd.read_csv(Z_time2_file)
 
 # Extract subject ID numbers
 subject_id = Z2['participant_id'].tolist()
 
+# Calculate sex for each subject (males are odd numbers, females are even)
+sex_val = [0 if s % 2 == 0 else 1 for s in subject_id]
+
+# Add to dataframe
+Z2['sex'] = sex_val
+
 # Make separate dataframes for males and females
-Z2_female = Z2[Z2['gender']==0]
-Z2_male = Z2[Z2['gender']==1]
+Z2_female = Z2[Z2['sex']==0]
+Z2_male = Z2[Z2['sex']==1]
 
 # Create list of brain regions
 rois = Z2.columns.values.tolist()
 rois.remove('participant_id')
-rois.remove('gender')
+rois.remove('sex')
 
 # Calculate standard deviations for all brain regions for males and females
 Z2_stats = pd.DataFrame(index=['mean_female', 'mean_male', 'std_female', 'std_male'])
@@ -60,6 +68,9 @@ cohensd_male = Z2_stats.loc['mean_male']
 
 female_count_above_threshold = (cohensd_female <= -0.5).sum()
 male_count_above_threshold = (cohensd_male <= -0.5).sum()
+
+# Remove prefix from column names
+Z2_stats.columns = Z2_stats.columns.str.replace('cortthick-', '')
 
 # Extract mean values and confidence intervals
 mean_female = Z2_stats.loc['mean_female']
@@ -118,17 +129,15 @@ plt.show()
 # Perform an independent t-test
 t_stat, p_value = stats.ttest_ind(cohensd_female, cohensd_male)
 
-df_long_m = pd.melt(Z2_male, id_vars=['participant_id', 'gender'], var_name='brain_region', value_name='Z2')
-df_long_f = pd.melt(Z2_female,  id_vars=['participant_id', 'gender'], var_name='brain_region', value_name='Z2')
+df_long_m = pd.melt(Z2_male, id_vars=['participant_id', 'sex'], var_name='brain_region', value_name='Z2')
+df_long_f = pd.melt(Z2_female,  id_vars=['participant_id', 'sex'], var_name='brain_region', value_name='Z2')
 df = pd.concat([df_long_m, df_long_f], axis=0)
 
-df = df.dropna()
-
-model = MixedLM.from_formula('Z2 ~ C(brain_region) * C(gender)', df, groups=df['participant_id'])
+model = MixedLM.from_formula('Z2 ~ C(brain_region) * C(sex)', df, groups=df['participant_id'])
 result= model.fit()
 print(result.summary())
 
-# table = AnovaRM(result, type=2)
+table = AnovaRM(result, typ=2)
 
 # anova_results = pg.mixed_anova(dv='ef', between='sex', within='brain_region', subject='subject', data=df)
 
