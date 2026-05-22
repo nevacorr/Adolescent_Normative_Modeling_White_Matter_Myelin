@@ -32,7 +32,7 @@ for metric in ['fa']:
     # gender
     Z_time2['gender'] = Z_time2['participant_id'].apply(lambda x: 0 if x % 2 == 0 else 1)
 
-    Z_time2['gender'] = Z_time2['gender'].map({0: 'Male', 1: 'Female'})
+    Z_time2['gender'] = Z_time2['gender'].map({1: 'Male', 0: 'Female'})
 
     Z_long = Z_time2.melt(
         id_vars=['participant_id', 'gender'],
