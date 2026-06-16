@@ -5,6 +5,11 @@
 # This program creates models of FA and MD change in white matter tractsbetween 9 and 17 years of age for our pre-COVID data and
 # stores these models to be applied in another script (Apply_Normative_Model_to_Genz_Time2.py).
 # Author: Neva M. Corrigan
+
+#####
+# Usage (if from command line):
+# source .venv/bin/activate
+# nohup python Normative_Model_Create_and_Apply_FA_and_MD.py > output.log 2>&1 &
 ######
 
 import os
@@ -27,8 +32,8 @@ show_nsubject_plots = 0 #set to 1 to plot number of subjects used in analysis, f
 # spline_order = 2        # order of spline to use for model
 spline_order = 1
 spline_knots = 2        # number of knots in spline to use in model
-evaluate_model_using_validation_set = False
-sensitivity_analysis = True
+evaluate_model_using_validation_set = True
+sensitivity_analysis = False
 
 data_dir = '/home/toddr/neva/PycharmProjects/data_dir'
 
@@ -65,13 +70,13 @@ if run_make_norm_model:
     Z_time2_md.to_csv(f'{working_dir}/Z_time2_md_{n_splits}_splits.csv')
     write_list_to_file(roi_ids, f'{working_dir}/roi_ids.txt')
 
-Z_time2_fa = pd.read_csv(f'{working_dir}/Z_time2_fa_{n_splits}_splits.csv', usecols=lambda col: col != "Unnamed: 0")
-Z_time2_md = pd.read_csv(f'{working_dir}/Z_time2_md_{n_splits}_splits.csv', usecols=lambda col: col != "Unnamed: 0")
+# Z_time2_fa = pd.read_csv(f'{working_dir}/Z_time2_fa_{n_splits}_splits.csv', usecols=lambda col: col != "Unnamed: 0")
+# Z_time2_md = pd.read_csv(f'{working_dir}/Z_time2_md_{n_splits}_splits.csv', usecols=lambda col: col != "Unnamed: 0")
 roi_ids = pd.read_csv(f'{working_dir}/roi_ids.txt', header = None)
 roi_ids = roi_ids.iloc[:,0].tolist()
 
-plot_and_compute_zcores_by_gender(Z_time2_fa, 'fa', roi_ids, working_dir, n_splits)
-plot_and_compute_zcores_by_gender(Z_time2_md, 'md', roi_ids, working_dir, n_splits)
+# plot_and_compute_zcores_by_gender(Z_time2_fa, 'fa', roi_ids, working_dir, n_splits)
+# plot_and_compute_zcores_by_gender(Z_time2_md, 'md', roi_ids, working_dir, n_splits)
 
 plt.show()
 
