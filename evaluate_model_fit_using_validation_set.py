@@ -19,6 +19,7 @@ def evaluate_model_fit_using_validation_set(all_data_v1_orig, struct_var_metric,
     make_nm_directories(working_dir, valdata, valpredict)
 
     f_models = []
+    validation_metrics = []
 
     for split in range(n_splits):
         print(f"VALIDATION SPLIT NUMBER = {split+1}/{n_splits}")
@@ -160,17 +161,17 @@ def evaluate_model_fit_using_validation_set(all_data_v1_orig, struct_var_metric,
                     "error": str(e)
                 })
 
-
-            # # create dummy design matrices for visualizing model
+            # create dummy design matrices for visualizing model
             # dummy_cov_file_path_female, dummy_cov_file_path_male = \
-            #     create_dummy_design_matrix(struct_var_metric, agemin, agemax, cov_file_tr, spline_order,
-            #                                spline_knots,
-            #                                working_dir)
-            #
+                # create_dummy_design_matrix(struct_var_metric, agemin, agemax, cov_file_tr, spline_order,
+                #                            spline_knots,
+                #                            working_dir)
+
             # # Compute splines and superimpose on data. Show on screen or save to file depending on show_plots value.
             # plot_data_with_spline('Training Data', struct_var_metric, cov_file_tr, resp_file_tr,
             #                       dummy_cov_file_path_female,
             #                       dummy_cov_file_path_male, model_dir, roi, show_plots, working_dir, valdata)
+
 
         ######################## Apply Normative Model to Validation Data ############################
 
@@ -273,10 +274,11 @@ def evaluate_model_fit_using_validation_set(all_data_v1_orig, struct_var_metric,
             try:
                 # make predictions
                 yhat_te, s2_te, Z = predict(cov_file_te, respfile=resp_file_te, alg='blr', model_path=model_dir)
-
+                mystop=1
             except Exception as e:
                 yhat_te = np.full((X_val.shape[0], 1), np.nan)
                 Z = np.full((X_val.shape[0], 1), np.nan)
+
                 f_models.append({
                     "metric": struct_var_metric,
                     "split": split,
@@ -284,6 +286,11 @@ def evaluate_model_fit_using_validation_set(all_data_v1_orig, struct_var_metric,
                     "stage": "predict",
                     "error": str(e)
                 })
+
+            validation_metrics.append({
+                "split": split,
+                "roi": roi,
+            })
 
             valid_idx = ~y_val.index.isin(y_val_nan_index[roi])
 
@@ -296,10 +303,15 @@ def evaluate_model_fit_using_validation_set(all_data_v1_orig, struct_var_metric,
             })
 
 
-            # Save to file for this ROI and this split
-            results_file = os.path.join(working_dir, f'predictions_true_yhat_Z_{struct_var_metric}_{roi}_split{split}.csv')
-            results_df.to_csv(results_file, index=False)
-            print(f"Saved predictions and Z-scores to {results_file}")
+            # # Save to file for this ROI and this split
+            # results_file = os.path.join(working_dir, f'predictions_true_yhat_Z_{struct_var_metric}_{roi}_split{split}.csv')
+            # results_df.to_csv(results_file, index=False)
+            # print(f"Saved predictions and Z-scores to {results_file}")
+
+            # Save model performance stats for this ROI and split
+            performance_file = os.path.join(working_dir, f'performance_stats_{struct_var_metric}.csv')
+            pd.DataFrame(validation_metrics).to_csv(performance_file, index=False)
+            print(f"Saved performance stats to {performance_file}")
 
             ind = 0
             if Z_time2.shape[0] == Z.shape[0]:
@@ -312,19 +324,18 @@ def evaluate_model_fit_using_validation_set(all_data_v1_orig, struct_var_metric,
                         Z_time2.loc[subj, roi] = Z[ind]
                         ind += 1
 
-            # create dummy design matrices
+            # # create dummy design matrices
             # dummy_cov_file_path_female, dummy_cov_file_path_male = \
-                # create_dummy_design_matrix(struct_var_metric, agemin, agemax, cov_file_te, spline_order,
-                #                            spline_knots,
-                #                            working_dir)
-
+            #     create_dummy_design_matrix(struct_var_metric, agemin, agemax, cov_file_te, spline_order,
+            #                                spline_knots,
+            #                                working_dir)
+            #
             # plot_data_with_spline('Postcovid (Test) Data ', struct_var_metric, cov_file_te, resp_file_te,
             #                       dummy_cov_file_path_female, dummy_cov_file_path_male, model_dir, roi,
             #                       show_plots, working_dir, valdata)
 
-
-        Z_time2.to_csv('{}/{}/{}/Z_scores_by_region_postcovid_valset_{}_Final.txt'
-                       .format(working_dir, valpredict, struct_var_metric,split), index=False)
+        Z_time2.to_csv('{}/Z_scores_by_region_{}_precovid_valset_{}splits_Final.txt'
+                       .format(working_dir, struct_var_metric,split), index=False)
 
         pd.DataFrame(f_models).to_csv(
             f"{working_dir}/f_models_{struct_var_metric}.csv",
