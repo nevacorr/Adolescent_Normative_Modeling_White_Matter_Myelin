@@ -48,7 +48,7 @@ for metric in ['fa']:
         .mean()
     )
 
-    keep_tracts = ["Callosum Forceps Minor", "Right IFOF", "Right ILF"]
+    keep_tracts = ["Callosum Forceps Minor", "Right IFOF"]
 
     Z_plot = Z_collapsed[Z_collapsed["tractID"].isin(keep_tracts)]
 
@@ -62,7 +62,7 @@ for metric in ['fa']:
 
     # Z_plot['gender'] = Z_plot['gender'].map({0: 'Male', 1: 'Female'})
 
-    fig, axes = plt.subplots(1, 3, figsize=(15, 4), sharey=True)
+    fig, axes = plt.subplots(1, 2, figsize=(10, 4), sharey=True)
 
     x_min, x_max = -2, 2
 

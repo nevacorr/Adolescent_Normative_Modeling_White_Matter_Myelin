@@ -7,12 +7,12 @@ import numpy as np
 from collections import defaultdict
 import matplotlib.pyplot as plt
 
-metric = "fa"
+metric = "md"
 
 # path to current directory
 working_dir = os.getcwd()
 # path to your directory
-data_dir = f"{working_dir}/validation_set_predictions_20splits/{metric}"
+data_dir = f"{working_dir}/validation_set_predictions_20splits_June/{metric}"
 
 # grab all relevant files
 files = glob.glob(os.path.join(data_dir, f"predictions_true_yhat_Z_{metric}_*_split*.csv"))
@@ -56,6 +56,7 @@ for f in files:
         "tract": tract,
         "node": node,
         "split": split,
+        "EV":  1 - np.var(y_true - y_hat) / np.var(y_true),
         "R2": r2_score(y_true, y_hat),
         "RMSE": np.sqrt(mean_squared_error(y_true, y_hat)),
         "corr": np.corrcoef(y_true, y_hat)[0, 1],
@@ -68,11 +69,11 @@ metrics_df = pd.DataFrame(results)
 z_by_tract = {k: np.concatenate(v) for k, v in z_by_tract.items()}
 z_all = np.concatenate(z_all)
 
-summary = metrics_df[['R2','RMSE','corr','z_mean','z_std']].agg(['mean','std'])
+summary = metrics_df[['EV', 'R2','RMSE','corr','z_mean','z_std']].agg(['mean','std'])
 print(summary)
-summary.to_csv(f"{data_dir}/summary_metrics_{metric}.csv")
+# summary.to_csv(f"{data_dir}/summary_metrics_{metric}.csv")
 
-tract_summary = metrics_df.groupby('tract')[['R2','RMSE','corr', 'z_mean', 'z_std']].mean()
+tract_summary = metrics_df.groupby('tract')[['EV', 'R2','RMSE','corr', 'z_mean', 'z_std']].mean()
 tract_summary.to_csv(f"{data_dir}/summary_by_tract_{metric}.csv")
 
 plt.figure()

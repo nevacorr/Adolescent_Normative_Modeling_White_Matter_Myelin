@@ -311,6 +311,10 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
 
         Z_score_val_matrix['split'] = split + 1
         all_Z_score_val = pd.concat([all_Z_score_val, Z_score_val_matrix], ignore_index=True)
+
+        all_Z_score_val.to_csv(
+            f'{working_dir}/data/{struct_var_metric}/Z_scores_by_region_validation_{struct_var_metric}_set_all_splits.txt',
+            index=False)
         #
         # Z_time2 = apply_normative_model_time2(struct_var_metric, show_plots, show_nsubject_plots, spline_order,
         #                             spline_knots, working_dir, all_data_v2, roi_ids, dirdata, dirpredict, split,
@@ -335,7 +339,5 @@ def make_model(all_data_v1_orig, all_data_v2_orig, struct_var_metric, n_splits, 
     # Z2_all_splits = Z2_all_splits.groupby(by=['participant_id']).mean()
     # Z2_all_splits.reset_index(inplace=True)
 
-    all_Z_score_val.to_csv(f'{working_dir}/data/{struct_var_metric}/Z_scores_by_region_validation_{struct_var_metric}_set_all_splits.txt',
-                           index=False)
 
     return Z2_all_splits

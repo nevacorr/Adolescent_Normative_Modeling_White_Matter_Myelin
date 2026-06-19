@@ -7,7 +7,7 @@ workingdir = os.getcwd()
 # -------------------------
 # Load data
 # -------------------------
-df = pd.read_csv(f"{workingdir}/data/{dti_metric}/blr_metrics_{dti_metric}_100_splits.txt")
+df = pd.read_csv(f"{workingdir}/data/{dti_metric}/blr_metrics_{dti_metric}_1_splits.txt")
 
 # -------------------------
 # convert metrics to numeric (important if empty strings exist)

@@ -84,10 +84,10 @@ def make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_p
     #
     #     sys.exit()
     #
-    Z2_all_splits_md = make_model(md_all_data_v1, md_all_data_v2, 'md', n_splits, train_set_array, test_set_array,
-               show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids, sensitivity_analysis, evaluate_model_using_validation_set)
-
-    Z2_all_splits_md.to_csv(f'{working_dir}/Z2_all_splits_md.csv')
+    # Z2_all_splits_md = make_model(md_all_data_v1, md_all_data_v2, 'md', n_splits, train_set_array, test_set_array,
+    #            show_nsubject_plots, working_dir, spline_order, spline_knots, show_plots, roi_ids, sensitivity_analysis, evaluate_model_using_validation_set)
+    #
+    # Z2_all_splits_md.to_csv(f'{working_dir}/Z2_all_splits_md.csv')
 
     #
     # gc.collect() # Force garbage collection
