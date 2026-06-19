@@ -5,29 +5,44 @@
 # This program creates models of FA and MD change in white matter tractsbetween 9 and 17 years of age for our pre-COVID data and
 # stores these models to be applied in another script (Apply_Normative_Model_to_Genz_Time2.py).
 # Author: Neva M. Corrigan
+
+#####
+# Usage (if from command line):
+# source .venv/bin/activate
+# nohup python Normative_Model_Create_and_Apply_FA_and_MD.py > output.log 2>&1 &
 ######
 
 import os
 import matplotlib.pyplot as plt
 from plot_and_compute_zdistributions import plot_and_compute_zcores_by_gender
 from make_and_apply_normative_model_fa_md import make_and_apply_normative_model_fa_md
+from Utility_Functions import write_list_to_file
+import pandas as pd
+
+plt.ioff()  # Disable interactive mode
+plt.switch_backend("Agg")  # Use a non-Tkinter backend 
+
 
 struct_var = 'fa_and_md_and_mpf'
-n_splits = 3   #Number of train/test splits
-show_plots = 0          #set to 1 to show training and test data ymvs yhat and spline fit plots.
+
+n_splits = 100  #Number of train/test splits
+run_make_norm_model = 1
+show_plots = 0          #set to 1 to show training and test data y vs yhat and spline fit plots.
 show_nsubject_plots = 0 #set to 1 to plot number of subjects used in analysis, for each age and gender
-spline_order = 1        # order of spline to use for model
+# spline_order = 2        # order of spline to use for model
+spline_order = 1
 spline_knots = 2        # number of knots in spline to use in model
-perform_train_test_split_precovid = 0 #flag indicating whether to split the training set (pre-COVID data) into train and validation data
+evaluate_model_using_validation_set = True
+sensitivity_analysis = False
+
 data_dir = '/home/toddr/neva/PycharmProjects/data_dir'
-mf_separate = 1  # indicate whether to create separate models for males and females
 
 fa_visit1_datafile = 'genz_tract_profile_data/genzFA_tractProfiles_visit1.csv'
 fa_visit2_datafile = 'genz_tract_profile_data/genzFA_tractProfiles_visit2.csv'
 md_visit1_datafile = 'genz_tract_profile_data/genzMD_tractProfiles_visit1.csv'
 md_visit2_datafile = 'genz_tract_profile_data/genzMD_tractProfiles_visit2.csv'
-mpf_visit1_datafile = 'tableGenzVisit1_allTracts_Oct22.csv'
-mpf_visit2_datafile = 'tableGenzVisit2_allTracts_Oct22.csv'
+mpf_visit1_datafile = 'genz_tract_profile_data/genzFA_tractProfiles_visit1.csv'
+mpf_visit2_datafile = 'genz_tract_profile_data/genzFA_tractProfiles_visit1.csv'
 subjects_to_exclude_time1 = [525]  # subjects to exclude for FA and MD
 subjects_to_exclude_time2 = [525]  # subjects to exclude for FA and MD
 mpf_subjects_to_exclude_time1 = []#[106, 107, 111, 121, 122, 126, 127, 208, 209, 210, 211, 214, 215, 221, 226, 309, 323, 335,405, 418, 421, 423, 524]
@@ -35,16 +50,35 @@ mpf_subjects_to_exclude_time2 = [] #[105, 117, 119, 201, 209, 215, 301, 306, 319
 
 file_with_demographics = 'Adol_CortThick_data.csv'
 
-run_make_norm_model = 1
-
 working_dir = os.getcwd()
 
 if run_make_norm_model:
 
-   make_and_apply_normative_model_fa_md(mf_separate, struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
-                           data_dir, working_dir, fa_visit1_datafile, fa_visit2_datafile, md_visit1_datafile, md_visit2_datafile, mpf_visit1_datafile,
-                           mpf_visit2_datafile, subjects_to_exclude_time1, subjects_to_exclude_time2, mpf_subjects_to_exclude_time1,
-                           mpf_subjects_to_exclude_time2, file_with_demographics, n_splits)
+    Z_time2_fa, Z_time2_md, roi_ids = make_and_apply_normative_model_fa_md(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
+                           data_dir, working_dir, fa_visit1_datafile, fa_visit2_datafile, md_visit1_datafile, md_visit2_datafile, subjects_to_exclude_time1,
+                           subjects_to_exclude_time2, file_with_demographics, n_splits, evaluate_model_using_validation_set, sensitivity_analysis)
 
+    plt.show(block=False)
 
-   mystop=1
+    tmp = Z_time2_fa.groupby(by=['participant_id'])
+    Z_time2_fa = Z_time2_fa.groupby(by=['participant_id']).mean().drop(columns=['split'])
+    Z_time2_md = Z_time2_md.groupby(by=['participant_id']).mean().drop(columns=['split'])
+    Z_time2_fa.reset_index(inplace=True)
+    Z_time2_md.reset_index(inplace=True)
+
+    Z_time2_fa.to_csv(f'{working_dir}/Z_time2_fa_{n_splits}_splits.csv')
+    Z_time2_md.to_csv(f'{working_dir}/Z_time2_md_{n_splits}_splits.csv')
+    write_list_to_file(roi_ids, f'{working_dir}/roi_ids.txt')
+
+# Z_time2_fa = pd.read_csv(f'{working_dir}/Z_time2_fa_{n_splits}_splits.csv', usecols=lambda col: col != "Unnamed: 0")
+# Z_time2_md = pd.read_csv(f'{working_dir}/Z_time2_md_{n_splits}_splits.csv', usecols=lambda col: col != "Unnamed: 0")
+roi_ids = pd.read_csv(f'{working_dir}/roi_ids.txt', header = None)
+roi_ids = roi_ids.iloc[:,0].tolist()
+
+# plot_and_compute_zcores_by_gender(Z_time2_fa, 'fa', roi_ids, working_dir, n_splits)
+# plot_and_compute_zcores_by_gender(Z_time2_md, 'md', roi_ids, working_dir, n_splits)
+
+plt.show()
+
+mystop=1
+

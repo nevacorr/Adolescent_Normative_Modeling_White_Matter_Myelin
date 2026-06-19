@@ -10,6 +10,7 @@ import seaborn as sns
 import scipy.stats as stats
 import math
 from Utility_Functions import write_list_to_file
+from plot_tract_sig_profiles import plot_tract_sig_profiles
 
 def one_plot(ax, ptitle, ptitleB, Z_male_region, Z_female_region, binedges, zlim, nokde):
     if nokde==1:
@@ -110,7 +111,7 @@ def plot_separate_figures_sorted(df, Z_female, Z_male, binedges, zlim, struct_va
             elif region_for_title == 'isthmuscingulate':
                 region_for_title = 'isthmus cingulate'
 
-        bold_string = f'{hemi}{region_for_title} nsplits={nsplits}\n'
+        bold_string = f'{hemi}{region_for_title} {struct_var} nsplits={nsplits}\n'
         not_bold_string = (f'Female mean = {zmean_f:.2}, $\\it{{p}}$ = {df.loc[i, "pfemale"]:.2e}\n '
                            f'Male mean = {zmean_m:.2}, $\\it{{p}}$ = {df.loc[i, "pmale"]:.2e}')
         bold_string_list.append(bold_string)
@@ -224,6 +225,13 @@ def plot_and_compute_zcores_by_gender(Z_time2, struct_var, roi_ids, working_dir,
     reject_f, pvals_corrected_f, a1_f, a2_f = smt.multipletests(p_values_f, alpha=0.05, method='fdr_bh')
     reject_m, pvals_corrected_m, a1_m, a2_m = smt.multipletests(p_values_m, alpha=0.05, method='fdr_bh')
 
+    pvalues = np.array(p_values_f)  # Ensure it's a NumPy array
+    reject_f = (pvalues < 0.0500000).astype(int)
+    pvalues = np.array(p_values_m)  # Ensure it's a NumPy array
+    reject_m = (pvalues < 0.0500000).astype(int)
+    pvals_corrected_f = p_values_f
+    pvals_corrected_m = p_values_m
+
     #write regions where reject_f is True to file
     regions_reject_f = [roi_id for roi_id, reject_value in zip(roi_ids, reject_f) if reject_value]
     regions_reject_m = [roi_id for roi_id, reject_value in zip(roi_ids, reject_m) if reject_value]
@@ -244,6 +252,16 @@ def plot_and_compute_zcores_by_gender(Z_time2, struct_var, roi_ids, working_dir,
     binedges = np.linspace(binmin-0.5, binmax+0.5, 24)
 
     nokde=1
-    plot_by_gender_no_kde(struct_var, Z_female, Z_male, roi_ids, reject_f, reject_m, pvals_corrected_f,
-                          pvals_corrected_m, binedges, nokde, working_dir, nsplits)
+    #plot_by_gender_no_kde(struct_var, Z_female, Z_male, roi_ids, reject_f, reject_m, pvals_corrected_f,
+     #                     pvals_corrected_m, binedges, nokde, working_dir, nsplits)
+
+    zmean_f = {}
+    zmean_m = {}
+
+    for r in roi_ids:
+        zmean_f[r] = np.mean(Z_female[r])
+        zmean_m[r] = np.mean(Z_male[r])
+
+    plot_tract_sig_profiles(struct_var, zmean_f, reject_f, working_dir, nsplits, roi_ids, 'female')
+    plot_tract_sig_profiles(struct_var, zmean_m, reject_m, working_dir, nsplits, roi_ids, 'male')
 

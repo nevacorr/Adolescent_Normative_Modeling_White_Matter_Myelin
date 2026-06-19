@@ -12,11 +12,13 @@ import shutil
 from normative_edited import predict
 
 def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spline_order, spline_knots,
-                                working_dir, all_data_v2, roi_ids, dirdata, dirpredict, sex):
+                                working_dir, all_data_v2, roi_ids, dirdata, dirpredict, split, n_splits,
+                                sensitivity_analysis):
 
     ######################## Apply Normative Model to Post-Covid Data ############################
 
-    all_data_v2 = all_data_v2[all_data_v2['participant_id']<400]
+    if not sensitivity_analysis:
+        all_data_v2 = all_data_v2[all_data_v2['participant_id']<400]
 
     makenewdir('{}/{}/{}/ROI_models'.format(working_dir, dirpredict, struct_var))
     makenewdir('{}/{}/{}/covariate_files'.format(working_dir, dirpredict, struct_var))
@@ -33,10 +35,7 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
                        +' (Total N=' + str(all_data_v2.shape[0]) + ')', struct_var, 'post-covid_allsubj', working_dir, dirdata)
 
     #specify which columns of dataframe to use as covariates
-    if sex == 'all':
-        X_test = all_data_v2[['agedays', 'sex']]
-    else:
-        X_test = all_data_v2[['agedays']]
+    X_test = all_data_v2[['agedays', 'sex']]
 
     #make a matrix of response variables, one for each brain region
     y_test = all_data_v2.loc[:, roi_ids]
@@ -53,6 +52,10 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
     # region to file. Also remove the corresponding covariate values for that subject.
     ##########
     y_test_nan_index = {}
+
+    total = len(roi_ids) * n_splits # total number of models to be applied for this modality
+
+    tcounter = 0  # Initialize counter
 
     for c in y_test.columns:
 
@@ -95,13 +98,18 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
     ####Make Predictions of Brain Structural Measures Post-Covid based on Pre-Covid Normative Model
 
     #create design matrices for all regions and save files in respective directories
-    if sex == 'all':
-        create_design_matrix('test', agemin, agemax, spline_order, spline_knots, roi_ids, predict_files_dir)
-    else:
-        create_design_matrix_one_gender('test', agemin, agemax, spline_order, spline_knots, roi_ids, predict_files_dir)
+    create_design_matrix('test', agemin, agemax, spline_order, spline_knots, roi_ids, predict_files_dir)
+
+    roicounter = 0
 
     for roi in roi_ids:
+        print(f"SPLIT NUMBER = {split+1}/{n_splits}")
         print('Running ROI:', roi)
+        print(f"Models applied for {struct_var}:  {roicounter + 1}/{len(roi_ids)}")
+        print(f"Number of times applymodel has been run for this split = {tcounter + 1}")
+        tcounter += 1  # Increment counter
+        roicounter += 1
+
         roi_dir = os.path.join(predict_files_dir, roi)
         model_dir = os.path.join(training_dir, roi, 'Models')
         os.chdir(roi_dir)
@@ -112,8 +120,22 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
         # load test response files
         resp_file_te = os.path.join(roi_dir, 'resp_te.txt')
 
-        # make predictions
-        yhat_te, s2_te, Z = predict(cov_file_te, respfile=resp_file_te, alg='blr', model_path=model_dir)
+        try:
+            # make predictions
+            yhat_te, s2_te, Z = predict(cov_file_te, respfile=resp_file_te, alg='blr', model_path=model_dir)
+
+            #create dummy design matrices
+            dummy_cov_file_path_female, dummy_cov_file_path_male= \
+                create_dummy_design_matrix(struct_var, agemin, agemax, cov_file_te, spline_order, spline_knots,
+                                                      working_dir)
+
+            plot_data_with_spline('Postcovid (Test) Data ', struct_var, cov_file_te, resp_file_te,
+                                                dummy_cov_file_path_female, dummy_cov_file_path_male, model_dir, roi,
+                                                show_plots, working_dir, dirdata)
+        except:
+            yhat_te = np.nan
+            s2_te = np.nan
+            Z = np.full((X_test.shape[0], 1), np.nan)
 
         ind=0
         if Z_time2.shape[0] == Z.shape[0]:
@@ -126,26 +148,12 @@ def apply_normative_model_time2(struct_var, show_plots, show_nsubject_plots, spl
                     Z_time2.loc[subj,roi] = Z[ind]
                     ind += 1
 
-        #create dummy design matrices
-        dummy_cov_file_path_female, dummy_cov_file_path_male= \
-            create_dummy_design_matrix(struct_var, agemin, agemax, cov_file_te, spline_order, spline_knots,
-                                                  working_dir)
-        if sex == 'all':
-            plot_data_with_spline('Postcovid (Test) Data ', struct_var, cov_file_te, resp_file_te,
-                                             dummy_cov_file_path_female, dummy_cov_file_path_male, model_dir, roi,
-                                            show_plots, working_dir, dirdata)
-        elif sex == 'female':
-            plot_data_with_spline_one_gender(sex, 'Postcovid (Test) Data ', struct_var, cov_file_te, resp_file_te, dummy_cov_file_path_female,
-                                             model_dir, roi, show_plots, working_dir, dirdata, dirpredict)
-        elif sex == 'male':
-            plot_data_with_spline_one_gender(sex, 'Postcovid (Test) Data ', struct_var, cov_file_te, resp_file_te, dummy_cov_file_path_male,
-                                             model_dir, roi, show_plots, working_dir, dirdata, dirpredict)
-        mystop=1
-
     Z_time2.to_csv('{}/{}/{}/Z_scores_by_region_postcovid_testset_Final.txt'
                                 .format(working_dir, dirpredict, struct_var), index=False)
 
     plt.show()
+
+    print(f"finished SPLIT NUMBER = {split}/{n_splits}")
 
     return Z_time2
 

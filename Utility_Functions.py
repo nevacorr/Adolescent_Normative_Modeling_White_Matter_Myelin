@@ -189,12 +189,12 @@ def plot_data_with_spline(datastr, struct_var, cov_file, resp_file, dummy_cov_fi
     df_estspline = df_estspline.drop(index=df_estspline.iloc[999].name).reset_index(drop=True)
     df_estspline = df_estspline.drop(index=df_estspline.iloc[1998].name)
 
-    fig=plt.figure()
+    fig, ax = plt.subplots(figsize=(8,6))
     colors = {1: 'blue', 0: 'crimson'}
-    sns.lineplot(data=df_estspline, x='Age in Days', y=struct_var, hue='gender', palette=colors, legend=False)
-    sns.scatterplot(data=df_origdata, x='Age in Days', y=struct_var, hue='gender', palette=colors)
+    sns.lineplot(data=df_estspline, x='Age in Days', y=struct_var, hue='gender', palette=colors, legend=False, ax=ax)
+    sns.scatterplot(data=df_origdata, x='Age in Days', y=struct_var, hue='gender', palette=colors, ax=ax)
     plt.legend(title='')
-    ax = plt.gca()
+    # ax = plt.gca()
     fig.subplots_adjust(right=0.82)
     handles, labels = ax.get_legend_handles_labels()
     labels = ["female", "male"]
@@ -203,14 +203,16 @@ def plot_data_with_spline(datastr, struct_var, cov_file, resp_file, dummy_cov_fi
     plt.title(datastr +' ' + struct_var +  ' vs. Age\n' + roi.replace(struct_var+'-', ''))
     plt.xlabel('Age')
     plt.ylabel(datastr + struct_var)
+    plt.draw()
     if showplots == 1:
         if datastr == 'Training Data':
             plt.show(block=False)
         else:
             plt.show()
     else:
-        plt.savefig('{}/{}/{}/plots/{}_vs_age_withsplinefit_{}_{}'
-                .format(working_dir, dirdata, struct_var, struct_var, roi.replace(struct_var+'-', ''), datastr))
+        plot_file ='{}/{}/{}/plots/{}_vs_age_withsplinefit_{}_{}.png'.format(working_dir, dirdata, struct_var, struct_var, roi.replace(struct_var+'-', ''), datastr)
+        plt.savefig(plot_file)
+        print(f'wrote {plot_file} to file')
         plt.close(fig)
 
 def plot_data_with_spline_avg_brain(datastr, struct_var, cov_file, resp_file, dummy_cov_file_path_female,

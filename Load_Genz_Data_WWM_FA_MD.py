@@ -7,18 +7,18 @@ import pandas as pd
 from load_raw_data_WM_MPF import load_raw_data_wm_mpf
 from load_genz_tract_profile_data import load_genz_tract_profile_data
 
-def load_genz_data_wm_fa_md(struct_var, path, fa_braindatafilename_v1, fa_braindatafilename_v2, md_braindatafilename_v1,
+def load_genz_data_wm_fa_md(path, fa_braindatafilename_v1, fa_braindatafilename_v2, md_braindatafilename_v1,
                             md_braindatafilename_v2, demographics_filename):
 
     visit = 1
     # load data from visit 1
-    brain_data_v1_fa = load_genz_tract_profile_data('fa', visit, path, fa_braindatafilename_v1)
-    brain_data_v1_md = load_genz_tract_profile_data('md', visit, path, md_braindatafilename_v1)
+    brain_data_v1_fa = load_genz_tract_profile_data(visit, path, fa_braindatafilename_v1)
+    brain_data_v1_md = load_genz_tract_profile_data(visit, path, md_braindatafilename_v1)
 
     visit = 2
     # load data from visit 2
-    brain_data_v2_fa = load_genz_tract_profile_data('fa', visit, path, fa_braindatafilename_v2)
-    brain_data_v2_md = load_genz_tract_profile_data('md', visit, path, md_braindatafilename_v2)
+    brain_data_v2_fa = load_genz_tract_profile_data(visit, path, fa_braindatafilename_v2)
+    brain_data_v2_md = load_genz_tract_profile_data(visit, path, md_braindatafilename_v2)
 
     # put data from both visits in same dataframe
     fa_brain_data = pd.concat([brain_data_v1_fa, brain_data_v2_fa])
@@ -36,12 +36,14 @@ def load_genz_data_wm_fa_md(struct_var, path, fa_braindatafilename_v1, fa_braind
     # merge demo data with brain data
     fa_brain_data.rename(columns={'Subject': 'subject', 'Visit': 'visit'}, inplace=True)
     md_brain_data.rename(columns={'Subject': 'subject', 'Visit': 'visit'}, inplace=True)
+
     fa_all_data = pd.merge(demo_data, fa_brain_data, how='right', on=['subject', 'visit'])
     fa_all_data.sort_values(by='subject', inplace=True, ignore_index=True)
     md_all_data = pd.merge(demo_data, md_brain_data, how='right', on=['subject', 'visit'])
     md_all_data.sort_values(by='subject', inplace=True, ignore_index=True)
 
-    # Make lists of subjects with data only at timepoint 1, subjects with data at only timepoint 2, and all subjects in dataset
+    # Make lists of subjects with data only at timepoint 1, subjects with data at only timepoint 2,
+    # and all subjects in dataset for FA and MD data
     unique_subjects = fa_all_data['subject'].value_counts()
     unique_subjects = unique_subjects[unique_subjects == 1].index
     subjects_with_one_dataset = fa_all_data[fa_all_data['subject'].isin(unique_subjects)]
@@ -51,14 +53,20 @@ def load_genz_data_wm_fa_md(struct_var, path, fa_braindatafilename_v1, fa_braind
     subjects_v2_only = subjects_visit2_data_only['subject'].tolist()
 
     # create a list of all the region columns to run a normative model for
-    roi_ids = [col for col in fa_all_data.columns if 'FA' in col]
+    columns_to_exclude = ['subject', 'visit', 'gender', 'agemonths', 'agedays', 'agegroup', 'Age']
+    roi_ids = [col for col in fa_all_data.columns if col not in columns_to_exclude]
+
+    # tmp_reg_to_keep = ['Left Thalamic Radiation', 'Right Thalamic Radiation', 'Left IFOF', 'Right IFOF', 'Left ILF', 'Right ILF']
+    # roi_ids = [region for region in roi_ids if any(sub in region for sub in tmp_reg_to_keep)]
 
     fa_all_data.rename(columns={'subject': 'participant_id', 'gender':'sex', 'agegroup': 'age'}, inplace=True)
     md_all_data.rename(columns={'subject': 'participant_id', 'gender': 'sex', 'agegroup': 'age'}, inplace=True)
 
     all_subjects = fa_all_data['participant_id'].unique().tolist()
 
-    return fa_all_data, md_all_data, roi_ids, all_subjects, subjects_v1_only, subjects_v2_only
+    return (fa_all_data, md_all_data, roi_ids, all_subjects, subjects_v1_only,
+            subjects_v2_only)
+
 
 def load_genz_data_wm_mpf_v1(struct_var, path, braindatafilename_v1, braindatafilename_v2,
                              demographics_filename):
@@ -72,7 +80,7 @@ def load_genz_data_wm_mpf_v1(struct_var, path, braindatafilename_v1, braindatafi
 
     # put data from both visits in same dataframe
     brain_data = pd.concat([brain_data_v1, brain_data_v2])
-    # brain_data['Subject'] = brain_data['Subject'].astype('int64')
+
     # get demographic data
     demo_data = pd.read_csv(f'{path}/{demographics_filename}')
     demo_to_keep = ['subject', 'visit', 'gender', 'agemonths', 'agedays', 'agegroup']
